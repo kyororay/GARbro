@@ -58,7 +58,7 @@ Stirling
 
 ・下記ゲームブランドの差分画像のオフセット情報付加
 
-【BISHOP】【アトリエかぐや】【Escu:de】【PRINCIPIA】【クロシェット】【BaseSon】【ういんどみるOasis】【ういんどみる】【マリン】【ルネ】【BEe Light】【SkyFish poco】【SkyFish】【POISON】【Cabbit】【minori】【シルキーズ】【戯画】【しろくまだんご】【ハイクオソフト】【Lose】【CUBE】【Mint CUBE】【HULOTTE】【あざらしそふと+1】【戯画】【Guilty】【PULLTOP】【Empress×elf】【ensemble SWEET】【ensemble】
+【BISHOP】【アトリエかぐや】【Escu:de】【PRINCIPIA】【クロシェット】【BaseSon】【ういんどみるOasis】【ういんどみる】【マリン】【ルネ】【BEe Light】【SkyFish poco】【SkyFish】【POISON】【Cabbit】【minori】【シルキーズ】【戯画】【しろくまだんご】【ハイクオソフト】【Lose】【CUBE】【Mint CUBE】【HULOTTE】【あざらしそふと+1】【戯画】【Guilty】【PULLTOP】【Empress×elf】【ensemble SWEET】【ensemble】【Triangle】【Drei】
 
 ・CatSystemのスプライト画像に対応
 
