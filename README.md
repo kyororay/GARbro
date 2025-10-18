@@ -60,12 +60,6 @@ Stirling
 
 【BISHOP】【アトリエかぐや】【Escu:de】【PRINCIPIA】【クロシェット】【BaseSon】【ういんどみるOasis】【ういんどみる】【マリン】【ルネ】【BEe Light】【SkyFish poco】【SkyFish】【POISON】【Cabbit】【minori】【シルキーズ】【戯画】【しろくまだんご】【ハイクオソフト】【Lose】【CUBE】【Mint CUBE】【HULOTTE】【あざらしそふと+1】【戯画】【Guilty】【PULLTOP】【Empress×elf】【ensemble SWEET】【ensemble】
 
-<<<<<<< HEAD
 ・CatSystemのスプライト画像に対応
-=======
-・下記ゲームブランドのスプライト画像に対応
-
-【ういんどみるコスモス】【ういんどみるOasis】【ensemble】【Cuteuphoria】
->>>>>>> 初期コミット
 
 ・鍵データの追加
