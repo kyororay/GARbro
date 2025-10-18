@@ -27,11 +27,24 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
+using System.Linq;
+using System.Text;
+using System.Windows;
+using System.Windows.Documents;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using GameRes.Formats.Musica;
+using GameRes.Formats.NeXAS;
 using GameRes.Formats.Strings;
 using GameRes.Utility;
 
 namespace GameRes.Formats.DxLib
 {
+    public class MedMetaData : ImageMetaData
+    {
+        public string Base;
+    }
+
     public interface IScriptEncryption
     {
         int StartOffset { get; }
@@ -150,6 +163,11 @@ namespace GameRes.Formats.DxLib
                 if (encryption != null)                                        
                     return new ScrMedArchive (file, this, dir, encryption);
             }
+
+            //メタデータの初期化
+            m_get_flag = false;
+            m_metadata_dict.Clear();
+
             return new ArcFile (file, this, dir);
         }
 
@@ -165,6 +183,147 @@ namespace GameRes.Formats.DxLib
                 scr_arc.Encryption.Decrypt (data, offset, data.Length-offset);
             }
             return new BinMemoryStream (data, entry.Name);
+        }
+
+        public override IImageDecoder OpenImage(ArcFile arc, Entry entry)
+        {
+            using (var decoder = base.OpenImage(arc, entry))
+            {
+                var source = decoder.Image.Bitmap;
+
+                try
+                {
+                    SetParams(arc, entry);
+                    if (m_metadata_dict.ContainsKey(entry.Name))
+                    {
+                        var info = m_metadata_dict[entry.Name];
+
+                        //ベース画像のサイズ取得
+                        if (!string.IsNullOrEmpty(info.Base))
+                        {
+                            var base_name = Path.GetDirectoryName(entry.Name) + info.Base;
+                            var base_entry = arc.Dir.FirstOrDefault(e => e.Name.ToLower() == base_name.ToLower());
+                            if (base_entry == null)
+                            {
+                                info.iWidth = info.OffsetX + source.PixelWidth;
+                                info.iHeight = info.OffsetY + source.PixelHeight;
+                            }
+                            else
+                            {
+                                using (var input = arc.OpenImage(base_entry))
+                                {
+                                    info.iWidth = input.Image.Bitmap.PixelWidth;
+                                    info.iHeight = input.Image.Bitmap.PixelHeight;
+                                }
+                            }
+                        }
+
+                        int byte_depth = info.BPP / 8;
+                        int stride = info.iWidth * byte_depth;
+                        int offset = info.OffsetY * stride + info.OffsetX * byte_depth;
+                        var pixels = new byte[stride * info.Height];
+                        source.CopyPixels(Int32Rect.Empty, pixels, stride, offset);
+                        source = BitmapImage.Create(
+                            info.iWidth,
+                            info.iHeight,
+                            ImageData.DefaultDpiX,
+                            ImageData.DefaultDpiY,
+                            PixelFormats.Bgra32,
+                            null,
+                            pixels,
+                            stride
+                            );
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(System.IO.Path.GetFileName(entry.Name));
+                    Console.WriteLine(e.Message);
+                    Console.WriteLine(e.StackTrace);
+                }
+
+                return new BitmapSourceDecoder(source);
+            }
+        }
+
+        internal static Dictionary<string, MedMetaData> m_metadata_dict = new Dictionary<string, MedMetaData>(StringComparer.OrdinalIgnoreCase);
+        internal static bool m_get_flag = false;
+
+        private void SetParams(ArcFile arc, Entry entry)
+        {
+            if (!m_get_flag)
+            {
+                var med_dir = Path.GetDirectoryName(arc.File.Name);
+                VFS.FullPath = new string[] { med_dir };
+
+                string[] item_list;
+                using (var med_arc = ArcFile.TryOpen(med_dir + "\\md_scr.med"))
+                {
+                    var bg_entry = med_arc.Dir.ToList().Find(e => e.Name == "_BGSET");
+                    using (var input = med_arc.OpenEntry(bg_entry))
+                    {
+                        input.Position = 0x11;
+                        if (input.ReadStringUntil(0x00, Encoding.UTF8) != "#RULE_BG2")
+                        {
+                            VFS.FullPath = new string[] { arc.File.Name, "" };
+                            return;
+                        }
+
+                        input.Position = 0x1D;
+                        using (var ms = new MemoryStream())
+                        {
+                            input.CopyTo(ms);
+                            var data = ms.ToArray();
+                            for (int i = 0; i < data.Length; ++i)
+                            {
+                                if (data[i] == 0x00)
+                                    data[i] = 0x20;
+                            }
+                            item_list = Encoding.GetEncoding("UTF-8").GetString(data).Split(' ');
+                        }
+                    }
+                }
+                var name_list = arc.Dir.Select(e => e.Name);
+                string prefix = "";
+                string body = "";
+                foreach (var item in item_list)
+                {
+                    if (item.StartsWith("PREFIX"))
+                    {
+                        prefix = item.Split(',')[1];
+                    }
+                    else if (item.StartsWith("BODY") && body == "")
+                    {
+                        var body_name = prefix + item.Split(',')[1] + ".prs";
+                        if (name_list.Contains(body_name))
+                            body = body_name;
+                    }
+                    else if (item.StartsWith("PARTS") || item.StartsWith("FACE"))
+                    {
+                        var parts = item.Split(',');
+                        if (parts.Length != 4)
+                            continue;
+                        try
+                        {
+                            m_metadata_dict[prefix + parts[1] + ".prs"] = new MedMetaData
+                            {
+                                OffsetX = Convert.ToInt32(parts[2]),
+                                OffsetY = Convert.ToInt32(parts[3]),
+                                BPP = 32,
+                                Base = body
+                            };
+                        }
+                        catch{ } //誤記のケースがあるので、その対応
+                    }
+                    else if (item == "}")
+                    {
+                        body = "";
+                    }
+                }
+                m_get_flag = true;
+            }
+
+            VFS.FullPath = new string[] { arc.File.Name, "" };
         }
 
         public override ResourceOptions GetDefaultOptions ()
