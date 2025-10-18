@@ -228,7 +228,7 @@ namespace GARbro.GUI
         bool IsPreviewPossible (Entry entry)
         {
             return "image" == entry.Type || "script" == entry.Type
-                || (string.IsNullOrEmpty (entry.Type) && entry.Size < 100000);
+                || (string.IsNullOrEmpty (entry.Type) && entry.Size < 204800);
         }
 
         void UpdatePreviewPane (Entry entry)
