@@ -537,7 +537,6 @@ namespace GameRes.Formats.KiriKiri
         //ハイクオソフト, Lose
         private void ReadMetaV1(ArcFile arc, string name)
         {
-            Console.WriteLine("1");
             var name_parts = name.Split('_');
             string meta_name = name_parts[0];
             for (int i = 1; i < name_parts.Length - 1; ++i)
@@ -547,7 +546,6 @@ namespace GameRes.Formats.KiriKiri
             var entry = arc.Dir.FirstOrDefault(e => e.Name.ToLower() == meta_name);
             if (entry == null)
                 return;
-            Console.WriteLine("2");
 
             using (var input = arc.OpenEntry(entry))
             {
