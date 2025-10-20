@@ -1596,25 +1596,41 @@ namespace GameRes.Formats.KiriKiri
     }
 
     [Serializable]
-    public class WhispCrypt : ICrypt
+    public class MiburoCrypt : ICrypt
     {
+        private const int KeySize = 29;
+
         public override void Decrypt(Xp3Entry entry, long offset, byte[] buffer, int pos, int count)
         {
-            for (int i = 0; i < count; i += 2)
+            byte[] key = InitKey(entry.Hash);
+
+            for (int i = 0; i < count; ++i)
             {
-                short data = (short)(buffer[pos + i] | (buffer[pos + i + 1] << 8));
-                if (data >= 0x20)
-                {
-                    data = (short)((((data & 0xFFFE) << 8) ^ data) ^ 1);
-                    buffer[pos + i] = (byte)(data & 0x00FF);
-                    buffer[pos + i + 1] = (byte)(data >> 8);
-                }
+                buffer[pos + i] ^= key[(offset + i) % KeySize];
             }
         }
 
         public override void Encrypt(Xp3Entry entry, long offset, byte[] buffer, int pos, int count)
         {
             Decrypt(entry, offset, buffer, pos, count);
+        }
+
+        private byte[] InitKey(uint hash)
+        {
+            hash = hash & 0x1FFFFFFF;
+            hash |= ((hash & 1) << KeySize);
+
+            byte[] key = new byte[KeySize];
+
+            for (int i = 0; i < KeySize; i++)
+            {
+                key[i] = (byte)hash;
+
+                hash = (hash >> 8) | ((hash << 0x15) & 0xFF000000);
+
+            }
+
+            return key;
         }
     }
 
