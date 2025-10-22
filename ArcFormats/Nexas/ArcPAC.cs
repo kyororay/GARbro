@@ -341,15 +341,14 @@ namespace GameRes.Formats.NeXAS
                     var pac_dir = System.IO.Path.GetDirectoryName(arc.File.Name);
                     VFS.FullPath = new string[] { pac_dir };
                     pac_arc = ArcFile.TryOpen(pac_dir + "\\Config.pac");
-                    dat_entry = pac_arc.Dir.ToList().Find(e => e.Name.ToLower() == "visual.dat");
+                    dat_entry = pac_arc.Dir.FirstOrDefault(e => e.Name.ToLower() == "visual.dat");
                 }
                 else if (arc_name == "update.pac") //アペンドアーカイブ
                 {
                     pac_arc = arc;
-                    List<Entry> dir = pac_arc.Dir.ToList();
-                    if (!dir.Exists(e => e.Name == "visual.dat"))
+                    dat_entry = pac_arc.Dir.FirstOrDefault(e => e.Name == "visual.dat");
+                    if (dat_entry == null)
                         return;
-                    dat_entry = dir.Find(e => e.Name == "visual.dat");
                 }
                 else
                     return;
