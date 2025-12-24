@@ -2,6 +2,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 
 namespace SchemeTool
 {
@@ -11,22 +12,34 @@ namespace SchemeTool
         {
             try
             {
+                uint seed;
+                int code_length; //program(.text)
+                int data_length; //data(.data)
+
                 var dir = "E:\\GARbro開発用\\椎名里緒\\[150424][D：drive.] ツゴウノイイアイドル\\解析";
 
-                //シュウカツ家庭教師
-                //uint seed = 0x08FD39FC5;
-                //int code_length = 0x9FA95; //program(.text)
-                //int data_length = 0x30000; //data(.data)
-
-                //ソーサリージョーカーズ
-                //uint seed = 0x6D87EF0F;
-                //int code_length = 0x9FBF5; //program(.text)
-                //int data_length = 0x30000; //data(.data)
-
-                //ツゴウノイイアイドル
-                uint seed = 0x716B756B;
-                int code_length = 0x9F8E5; //program(.text)
-                int data_length = 0x30000; //data(.data)
+                if (dir.Contains("シュウカツ家庭教師"))
+                {
+                    seed = 0x08FD39FC5;
+                    code_length = 0x9FA95;
+                    data_length = 0x30000;
+                }
+                else if (dir.Contains("ソーサリージョーカーズ"))
+                {
+                    seed = 0x6D87EF0F;
+                    code_length = 0x9FBF5;
+                    data_length = 0x30000;
+                }
+                else if (dir.Contains("ツゴウノイイアイドル"))
+                {
+                    seed = 0x716B756B;
+                    code_length = 0x9F8E5;
+                    data_length = 0x30000;
+                }
+                else
+                {
+                    return;
+                }
 
                 //コード領域(.text)
                 byte[] code_bin = new byte[code_length];
@@ -73,7 +86,6 @@ namespace SchemeTool
 
             Console.Write("\nPress <Enter> to exit... ");
             while (Console.ReadKey().Key != ConsoleKey.Enter) { }
-
         }
     }
 }
