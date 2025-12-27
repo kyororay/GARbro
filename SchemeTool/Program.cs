@@ -29,7 +29,7 @@ namespace SchemeTool
         static void Main(string[] args)
         {
             var write_flag = true;
-            var mode = 1;
+            var mode = 7;
             /*
             0 : format tag
             1 : game_map
@@ -70,7 +70,7 @@ namespace SchemeTool
                     {
                         //foreach (var i in gameMap)
                         //Console.WriteLine("{0} : {1}", i.Key, i.Value);
-                        gameMap["MIBURO.eXe"] = "幕末尽忠報国烈士伝 -MIBURO-";
+                        gameMap["DAMAMUKO.exe"] = "黙って私のムコになれ！";
                     }
                 }
                 else if (mode == 2)
@@ -322,14 +322,13 @@ namespace SchemeTool
                 {
                     Console.WriteLine("<---------- ShiinaRio.EncryptionScheme ---------->");
                     var scheme = FormatCatalog.Instance.ArcFormats.FirstOrDefault(a => a.Tag == "WAR" && a.Description == "ShiinaRio engine resource archive").Scheme as WarcScheme;
-                    /*foreach (var Scheme in scheme.KnownSchemes)
+                    foreach (var Scheme in scheme.KnownSchemes)
                     {
-                        if (Scheme.OriginalTitle == "ビッチ姉ちゃんが清純なはずがないっ！")
+                        if (Scheme.OriginalTitle == "黙って私のムコになれ！")
                         {
-                            Scheme.Name = "ビッチ姉ちゃんが清純なはずがないっ！";
-                            Scheme.ExtraCrypt = new PreAdlerCrypt();
+                            Scheme.Name = "黙って私のムコになれ！";
                         }
-                    }*/
+                    }
 
                     /*StreamWriter writer = new StreamWriter(".\\GameData\\Formats.txt", false, Encoding.GetEncoding("Shift_JIS"));
                     foreach (var Scheme in scheme.KnownSchemes)
@@ -351,9 +350,9 @@ namespace SchemeTool
                     }
                     writer.Close();*/
 
-                    Console.WriteLine(scheme.KnownSchemes.Length);
+                    /*Console.WriteLine(scheme.KnownSchemes.Length);
                     foreach (var Scheme in scheme.KnownSchemes)
-                        Console.WriteLine(Scheme.Name);
+                        Console.WriteLine(Scheme.Name);*/
 
                     /*var scheme_ary = new EncryptionScheme[1];
                     scheme_ary[0] = new EncryptionScheme
@@ -372,7 +371,7 @@ namespace SchemeTool
                     
                     Array.Resize(ref scheme.KnownSchemes, scheme.KnownSchemes.Length + scheme_ary.Length);
                     for (int i = 0; i < scheme_ary.Length; ++i)
-                        scheme.KnownSchemes[scheme.KnownSchemes.Length - 1 - i] = scheme_ary[i];
+                        scheme.KnownSchemes[scheme.KnownSchemes.Length - 1 - i] = scheme_ary[i]; */
 
                     //3要素目以降をソート
                     var span = scheme.KnownSchemes.AsSpan();
@@ -381,7 +380,7 @@ namespace SchemeTool
                     scheme.KnownSchemes = common_scheme_ary.Concat(title_scheme_ary).ToArray();
 
                     //注意：GameRes.Formats.ShiinaRio.Decoder.KnownSchemesのスコープをinternalからpublicに変更すること
-                    GameRes.Formats.ShiinaRio.Decoder.KnownSchemes = scheme.KnownSchemes;*/
+                    GameRes.Formats.ShiinaRio.Decoder.KnownSchemes = scheme.KnownSchemes;
                 }
                 else if (mode == 8)
                 {
