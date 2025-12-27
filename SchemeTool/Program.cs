@@ -29,7 +29,7 @@ namespace SchemeTool
         static void Main(string[] args)
         {
             var write_flag = true;
-            var mode = 7;
+            var mode = 1;
             /*
             0 : format tag
             1 : game_map
@@ -70,7 +70,7 @@ namespace SchemeTool
                     {
                         //foreach (var i in gameMap)
                         //Console.WriteLine("{0} : {1}", i.Key, i.Value);
-                        gameMap["DAMAMUKO.exe"] = "黙って私のムコになれ！";
+                        gameMap["NAZIMI_.exe"] = "馴染みのオバちゃん ～バツイチ熟女と淫乱未亡人～";
                     }
                 }
                 else if (mode == 2)
@@ -324,9 +324,10 @@ namespace SchemeTool
                     var scheme = FormatCatalog.Instance.ArcFormats.FirstOrDefault(a => a.Tag == "WAR" && a.Description == "ShiinaRio engine resource archive").Scheme as WarcScheme;
                     foreach (var Scheme in scheme.KnownSchemes)
                     {
-                        if (Scheme.OriginalTitle == "黙って私のムコになれ！")
+                        if (Scheme.OriginalTitle == "馴染みのオバちゃん")
                         {
-                            Scheme.Name = "黙って私のムコになれ！";
+                            Scheme.Name = "馴染みのオバちゃん ～バツイチ熟女と淫乱未亡人～";
+                            Scheme.OriginalTitle = "馴染みのオバちゃん ～バツイチ熟女と淫乱未亡人～";
                         }
                     }
 
