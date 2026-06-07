@@ -70,7 +70,7 @@ namespace SchemeTool
                     {
                         //foreach (var i in gameMap)
                         //Console.WriteLine("{0} : {1}", i.Key, i.Value);
-                        gameMap["NAZIMI_.exe"] = "馴染みのオバちゃん ～バツイチ熟女と淫乱未亡人～";
+                        gameMap["やりなおしクランクイン.exe"] = "やりなおしクランクイン";
                     }
                 }
                 else if (mode == 2)
@@ -107,10 +107,9 @@ namespace SchemeTool
                         }
                     }*/
 
-                    //scheme.KnownSchemes["すれ違う兄妹の壊れる倫理観"] = scheme.KnownSchemes["Surechigau Kyoudai no Kowareru Rinrikan"];
+                    scheme.KnownSchemes["やりなおしクランクイン"] = new XorCrypt(0x1A);
                     //scheme.KnownSchemes.Remove("Surechigau Kyoudai no Kowareru Rinrikan");
-
-                    scheme.KnownSchemes["幕末尽忠報国烈士伝 -MIBURO-"] = new MiburoCrypt();
+                    //scheme.NoCryptTitles.Add("野良猫少女との生活 CAT Girl Sweet Days");
 
 
 
@@ -147,8 +146,8 @@ namespace SchemeTool
                     var key = scheme.KnownSchemes["Mujina"];
                     scheme.KnownSchemes.Add("ムジナ", key);
                     scheme.KnownSchemes.Remove("Mujina");*/
-                    scheme.KnownSchemes["モラトリアム"] = new DataScheme { ExtraHeaderSize = 0 };
-                }
+                    scheme.KnownSchemes["一根不浄"] = scheme.KnownSchemes["三毒繚乱"];
+                }                
                 else if (mode == 6)
                 {
                     Console.WriteLine("<---------- Cyberworks.DatScheme ---------->");
