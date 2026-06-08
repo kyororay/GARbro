@@ -29,7 +29,7 @@ namespace SchemeTool
         static void Main(string[] args)
         {
             var write_flag = true;
-            var mode = 1;
+            var mode = 3;
             /*
             0 : format tag
             1 : game_map
@@ -70,7 +70,7 @@ namespace SchemeTool
                     {
                         //foreach (var i in gameMap)
                         //Console.WriteLine("{0} : {1}", i.Key, i.Value);
-                        gameMap["ダウニャーさんと飼い主くん.exe"] = "ダウニャーさんと飼い主くん";
+                        gameMap["飛べない蝶のバレンタイン.exe"] = "飛べない蝶のバレンタイン";
                     }
                 }
                 else if (mode == 2)
@@ -107,8 +107,8 @@ namespace SchemeTool
                         }
                     }*/
 
-                    scheme.KnownSchemes["ダウニャーさんと飼い主くん"] = new XorCrypt(0x76);
-                    //scheme.KnownSchemes["飛べない蝶のバレンタイン"] = new XorCrypt(0);
+                    //scheme.KnownSchemes["ダウニャーさんと飼い主くん"] = new XorCrypt(0x76);
+                    scheme.KnownSchemes["飛べない蝶のバレンタイン"] = new XorCrypt(0xAD);
 
                     //scheme.KnownSchemes.Remove("Surechigau Kyoudai no Kowareru Rinrikan");
                     //scheme.NoCryptTitles.Add("野良猫少女との生活 CAT Girl Sweet Days");

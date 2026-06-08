@@ -523,6 +523,7 @@ namespace GameRes.Formats.KiriKiri
                 "こあくまちゃんの誘惑っ!",
                 "やりなおしクランクイン",
                 "ダウニャーさんと飼い主くん",
+                "飛べない蝶のバレンタイン",
                 //Sonora
                 "僕の未来は、恋と課金と。 ～Charge To The Future～",
                 "同じクラスのアイドルさん。Around me is full by a celebrity.",
