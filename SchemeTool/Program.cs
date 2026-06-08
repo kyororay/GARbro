@@ -108,7 +108,13 @@ namespace SchemeTool
                     }*/
 
                     //scheme.KnownSchemes["ダウニャーさんと飼い主くん"] = new XorCrypt(0x76);
-                    scheme.KnownSchemes["飛べない蝶のバレンタイン"] = new XorCrypt(0xAD);
+                    scheme.KnownSchemes["[共通] HashCrypt"] = new HashCrypt();
+                    scheme.KnownSchemes["[共通] PoringSoftCrypt"] = new PoringSoftCrypt();
+                    scheme.KnownSchemes["[共通] NatsupochiCrypt"] = new NatsupochiCrypt();
+                    scheme.KnownSchemes["[共通] HibikiCrypt"] = new HibikiCrypt();
+                    scheme.KnownSchemes["[共通] NephriteCrypt"] = new NephriteCrypt();
+                    scheme.KnownSchemes["[共通] AppliqueCrypt"] = new AppliqueCrypt();
+                    scheme.KnownSchemes["[共通] MadoCrypt"] = new MadoCrypt(0x00000000);
 
                     //scheme.KnownSchemes.Remove("Surechigau Kyoudai no Kowareru Rinrikan");
                     //scheme.NoCryptTitles.Add("野良猫少女との生活 CAT Girl Sweet Days");
