@@ -6,7 +6,9 @@ morktさんのGARbroをベースに変更を加えています
 
 https://github.com/morkt/GARbro
 
-※crskycodeさんのソースコードもいくつかマージしています
+crskycodeさんのソースコードもいくつかマージしています
+
+https://github.com/crskycode/GARbro
 
 開発環境
 ---------
