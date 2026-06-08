@@ -70,7 +70,7 @@ namespace SchemeTool
                     {
                         //foreach (var i in gameMap)
                         //Console.WriteLine("{0} : {1}", i.Key, i.Value);
-                        gameMap["やりなおしクランクイン.exe"] = "やりなおしクランクイン";
+                        gameMap["ダウニャーさんと飼い主くん.exe"] = "ダウニャーさんと飼い主くん";
                     }
                 }
                 else if (mode == 2)
@@ -107,7 +107,9 @@ namespace SchemeTool
                         }
                     }*/
 
-                    scheme.KnownSchemes["やりなおしクランクイン"] = new XorCrypt(0x1A);
+                    scheme.KnownSchemes["ダウニャーさんと飼い主くん"] = new XorCrypt(0x76);
+                    //scheme.KnownSchemes["飛べない蝶のバレンタイン"] = new XorCrypt(0);
+
                     //scheme.KnownSchemes.Remove("Surechigau Kyoudai no Kowareru Rinrikan");
                     //scheme.NoCryptTitles.Add("野良猫少女との生活 CAT Girl Sweet Days");
 
