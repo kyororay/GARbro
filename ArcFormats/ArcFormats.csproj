@@ -933,7 +933,7 @@
     <EmbeddedResource Include="ScrPlayer\ImgControlTable2" />
     <EmbeddedResource Include="ScrPlayer\ImgDeltaTable2" />
     <EmbeddedResource Include="ScrPlayer\ImgControlTable32" />
-    <Compile Include="WebP\ImageWEBP.cs">
+    <Compile Include="ImageWEBP.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Risa\ImageSYG.cs" />
