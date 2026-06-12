@@ -29,7 +29,7 @@ namespace SchemeTool
         static void Main(string[] args)
         {
             var write_flag = true;
-            var mode = 3;
+            var mode = 1;
             /*
             0 : format tag
             1 : game_map
@@ -70,7 +70,7 @@ namespace SchemeTool
                     {
                         //foreach (var i in gameMap)
                         //Console.WriteLine("{0} : {1}", i.Key, i.Value);
-                        gameMap["飛べない蝶のバレンタイン.exe"] = "飛べない蝶のバレンタイン";
+                        gameMap["tomoe.exe"] = "友恵の探偵物語 ～のぞき魔な私の天職～";
                     }
                 }
                 else if (mode == 2)
@@ -154,8 +154,8 @@ namespace SchemeTool
                     var key = scheme.KnownSchemes["Mujina"];
                     scheme.KnownSchemes.Add("ムジナ", key);
                     scheme.KnownSchemes.Remove("Mujina");*/
-                    scheme.KnownSchemes["一根不浄"] = scheme.KnownSchemes["三毒繚乱"];
-                }                
+                    scheme.KnownSchemes["友恵の探偵物語 ～のぞき魔な私の天職～"] = scheme.KnownSchemes["一根不浄"];
+                }
                 else if (mode == 6)
                 {
                     Console.WriteLine("<---------- Cyberworks.DatScheme ---------->");
