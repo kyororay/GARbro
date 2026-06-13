@@ -249,6 +249,7 @@
     <Compile Include="Software House Parsley\ArcScn.cs" />
     <Compile Include="TechGian\ArcBIN.cs" />
     <Compile Include="Turumiku\ImagePO2.cs" />
+    <Compile Include="TyranoScript\ArcASAR.cs" />
     <Compile Include="Unity\ScriptDSM.cs" />
     <Compile Include="Xuse\ArcNT.cs" />
     <Compile Include="Xuse\ArcWVB.cs" />
