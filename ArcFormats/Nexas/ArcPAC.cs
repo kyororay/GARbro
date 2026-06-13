@@ -28,29 +28,13 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
-using System.Diagnostics.Eventing.Reader;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Ink;
-using System.Windows.Markup;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
-using System.Xml.Linq;
 using GameRes.Compression;
-using GameRes.Formats.Artemis;
-using GameRes.Formats.Macromedia;
-using GameRes.Formats.Musica;
-using GameRes.Formats.Strings;
-using GameRes.Utility;
-using ZstdNet;
-using static System.Net.Mime.MediaTypeNames;
-using static System.Net.WebRequestMethods;
-using static GameRes.Formats.Emote.PsbReader;
 
 namespace GameRes.Formats.NeXAS
 {
