@@ -360,8 +360,8 @@
     </PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>echo d | xcopy /e /y "$(SolutionDir)\ArcFormats\WebP\x64" "$(TargetDir)\x64"
-echo d | xcopy /e /y "$(SolutionDir)\ArcFormats\WebP\x86" "$(TargetDir)\x86"
+    <PostBuildEvent>rem echo d | xcopy /e /y "$(SolutionDir)\ArcFormats\WebP\x64" "$(TargetDir)\x64"
+rem echo d | xcopy /e /y "$(SolutionDir)\ArcFormats\WebP\x86" "$(TargetDir)\x86"
 echo d | xcopy /e /y "$(SolutionDir)\packages\ZstdNet.1.3.3\build\x64" "$(TargetDir)\x64"
 echo d | xcopy /e /y "$(SolutionDir)\packages\ZstdNet.1.3.3\build\x86" "$(TargetDir)\x86"
 echo d | xcopy /e /y "$(SolutionDir)\GUI\Images\Cursors" "$(TargetDir)\Images\Cursors"
