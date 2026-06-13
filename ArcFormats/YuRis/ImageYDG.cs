@@ -1,5 +1,5 @@
 ﻿//! \file       ImageYDG.cs
-//! \date       Sun Apr 12 15:08:10 2026
+//! \date       Sat Jun 13 17:38:10 2026
 //! \brief      YU-RIS compressed image.
 //
 // Copyright (C) 2026 by morkt
@@ -27,13 +27,9 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
-using System.Linq;
 using System.Windows;
-using System.Windows.Ink;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using GameRes.Formats.Google;
-using Microsoft.SqlServer.Server;
 
 namespace GameRes.Formats.YuRis
 {
