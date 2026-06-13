@@ -252,6 +252,7 @@
     <Compile Include="Unity\ScriptDSM.cs" />
     <Compile Include="Xuse\ArcNT.cs" />
     <Compile Include="Xuse\ArcWVB.cs" />
+    <Compile Include="YuRis\ImageYDG.cs" />
     <Compile Include="Zyx\ImageXMG.cs" />
     <Compile Include="AudioAIFF.cs" />
     <Compile Include="Basil\ArcMIF.cs" />
