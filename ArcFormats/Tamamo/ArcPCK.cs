@@ -173,7 +173,7 @@ namespace GameRes.Formats.Tamamo
                 using (decoder)
                 {
                     WriteableBitmap ev_bitmap;
-                    Console.WriteLine(m_title);
+                    //Console.WriteLine(m_title);
                     if (m_title == "Senkou no Kishi") //MorktÇ≥ÇÒçÏê¨
                     {
                         ev_bitmap = CreateCanvas(1280, 720, source, new Int32Rect(0, 0, 1024, 719));
