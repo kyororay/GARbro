@@ -191,6 +191,7 @@ namespace GameRes.Formats.NeXAS
                 case Compression.None:
                     return input;
                 case Compression.Lzss:
+
                     return new LzssStream(input);
                 case Compression.Huffman:
                     using (input)
@@ -204,10 +205,10 @@ namespace GameRes.Formats.NeXAS
                     if (entry.Type == "image" || entry.Type == "audio") //画像、音楽はそのまま
                         return input;
                     else
-                        using (var dec = new ZstdNet.Decompressor()) //テキストはzstdで解凍
+                        using (var dec = new ZstdSharp.Decompressor()) //テキストはzstdで解凍
                         {
                             var unpacked = dec.Unwrap(arc.File.View.ReadBytes(entry.Offset, entry.Size));
-                            return new BinMemoryStream(unpacked, entry.Name);
+                            return new BinMemoryStream(unpacked.ToArray(), entry.Name);
                         }
                 case Compression.Deflate:
                 default:
@@ -220,8 +221,8 @@ namespace GameRes.Formats.NeXAS
             using (var decoder = base.OpenImage(arc, entry))
             {
                 var image = decoder.Image;
-                
-                if (System.IO.Path.GetExtension(entry.Name) == ".bmp")
+
+                if (Path.GetExtension(entry.Name) == ".bmp")
                 {
                     image.MakeTransparent( //黒色部分の透明化
                         System.Drawing.Color.FromArgb(0, 0, 0),
@@ -297,7 +298,7 @@ namespace GameRes.Formats.NeXAS
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(System.IO.Path.GetFileName(entry.Name));
+                    Console.WriteLine(Path.GetFileName(entry.Name));
                     Console.WriteLine(e.Message);
                     Console.WriteLine(e.StackTrace);
                 }

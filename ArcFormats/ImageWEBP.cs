@@ -24,15 +24,12 @@
 //
 
 using System;
-using System.ComponentModel;
 using System.ComponentModel.Composition;
 using System.IO;
-using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Windows;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using GameRes.Utility;
+using Dynamicweb.WebP;
 
 namespace GameRes.Formats.Google
 {
@@ -141,66 +138,29 @@ namespace GameRes.Formats.Google
 
         public override ImageData Read (IBinaryStream stream, ImageMetaData info)
         {
-            LibWebPLoader.Load();
-            var input = stream.ReadBytes ((int)stream.Length);
-            var bitmap = new WriteableBitmap ((int)info.Width, (int)info.Height, ImageData.DefaultDpiX,
-                                              ImageData.DefaultDpiY, PixelFormats.Bgra32, null);
-            bitmap.Lock();
-            try
-            {
-                var output = bitmap.BackBuffer;
-                int stride = bitmap.BackBufferStride;
-                unsafe
-                {
-                    fixed (byte* data = input)
-                    {
-                        var result = WebPDecodeBGRAInto ((IntPtr)data, (UIntPtr)input.Length, output,
-                                                         (UIntPtr)(stride * info.Height), stride);
-                        if (result != output)
-                            throw new InvalidFormatException ("WebP image decoder failed.");
-                    }
-                }
-                bitmap.AddDirtyRect (new Int32Rect (0, 0, (int)info.Width, (int)info.Height));
-            }
-            finally
-            {
-                bitmap.Unlock();
-            }
-            bitmap.Freeze();
-            return new ImageData (bitmap, info);
+            var source = System.Windows.Interop.Imaging.CreateBitmapSourceFromHBitmap(
+                Decoder.Decode(stream.ReadBytes((int)stream.Length)).GetHbitmap(),
+                IntPtr.Zero,
+                Int32Rect.Empty,
+                BitmapSizeOptions.FromEmptyOptions()
+                );
+
+            return new ImageData (source, info);
+        }
+
+        public BitmapSource Decode(IBinaryStream stream)
+        {
+            return System.Windows.Interop.Imaging.CreateBitmapSourceFromHBitmap(
+                Decoder.Decode(stream.ReadBytes((int)stream.Length)).GetHbitmap(),
+                IntPtr.Zero,
+                Int32Rect.Empty,
+                BitmapSizeOptions.FromEmptyOptions()
+                );
         }
 
         public override void Write (Stream file, ImageData image)
         {
             throw new NotImplementedException ("WebPFormat.Write not implemented");
-        }
-
-        [DllImport ("libwebp.dll", EntryPoint = "WebPDecodeBGRAInto", CallingConvention = CallingConvention.Cdecl)]
-        public static extern IntPtr WebPDecodeBGRAInto ([InAttribute()] IntPtr data, UIntPtr data_size, IntPtr output_buffer, UIntPtr output_buffer_size, int output_stride);
-    }
-
-    internal static class LibWebPLoader
-    {
-        [DllImport ("kernel32.dll", SetLastError = true, CallingConvention = CallingConvention.StdCall)]
-        static extern IntPtr LoadLibraryEx (string lpFileName, IntPtr hReservedNull, uint dwFlags);
-
-        static bool loaded = false;
-
-        const uint LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR = 0x00000100;
-        const uint LOAD_LIBRARY_SEARCH_SYSTEM32     = 0x00000800;
-
-        public static void Load ()
-        {
-            if (loaded)
-                return;
-            var folder = Path.GetDirectoryName (Assembly.GetExecutingAssembly().Location);
-            folder = Path.Combine (folder, (IntPtr.Size == 4) ? "x86" : "x64");
-            var fullPath = Path.Combine (folder, "libwebp.dll");
-            fullPath = Path.GetFullPath (fullPath);
-            var handle = LoadLibraryEx (fullPath, IntPtr.Zero, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_SYSTEM32);
-            if (IntPtr.Zero == handle)
-                throw new Win32Exception (Marshal.GetLastWin32Error());
-            loaded = true;
         }
     }
 }

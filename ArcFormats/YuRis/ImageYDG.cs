@@ -29,6 +29,7 @@ using System.ComponentModel.Composition;
 using System.IO;
 using System.Windows;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using GameRes.Formats.Google;
 
 namespace GameRes.Formats.YuRis
@@ -96,15 +97,18 @@ namespace GameRes.Formats.YuRis
             var stride = meta.iWidth * meta.BPP / 8;
             var pixels = new byte[stride * meta.Height];
 
-            ImageData image;
-            int offsetY = 0;
             var format = new WebPFormat();
+            int offsetY = 0;
 
             foreach (var entry in meta.EntryList)
             {
                 stream.Position = entry.Offset;
-                image = format.Read(stream, new ImageMetaData() { Width = meta.Width, Height = (uint)entry.Height, BPP = 32 });
-                image.Bitmap.CopyPixels(Int32Rect.Empty, pixels, stride, stride * offsetY);
+                format.Decode(stream).CopyPixels(
+                    Int32Rect.Empty, 
+                    pixels, 
+                    stride, 
+                    stride * offsetY
+                    );
                 offsetY += entry.Height;
             }
 

@@ -27,13 +27,11 @@ using GameRes.Utility;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
-using System.Diagnostics.Eventing.Reader;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Xml.Linq;
-using ZstdNet;
+using ZstdSharp;
 
 namespace GameRes.Formats.Sakana
 {
@@ -173,10 +171,10 @@ namespace GameRes.Formats.Sakana
         internal static byte[] UnpackZstd (byte[] data)
         {
             int unpacked_size = BigEndian.ToInt32 (data, 0);
-            using (var dec = new Decompressor())
+            using (var dec = new ZstdSharp.Decompressor())
             {
                 var packed = new ArraySegment<byte> (data, 4, data.Length - 4);
-                return dec.Unwrap (packed, unpacked_size);
+                return dec.Unwrap (packed, unpacked_size).ToArray();
             }
         }
 

@@ -31,7 +31,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Xml;
-using GameRes.Cryptography;
 using GameRes.Formats.PkWare;
 
 using SharpZip = ICSharpCode.SharpZipLib.Zip;
@@ -89,8 +88,8 @@ namespace GameRes.Formats.AirNovel
             SharpZip.ZipFile zip = null;
             try
             {
-                SharpZip.ZipStrings.CodePage = Encoding.UTF8.CodePage;
                 zip = new SharpZip.ZipFile (input);
+                zip.StringCodec = SharpZip.StringCodec.FromCodePage(Encoding.UTF8.CodePage);
                 var files = zip.Cast<SharpZip.ZipEntry>().Where (z => !z.IsDirectory);
                 bool has_encrypted = false;
                 var dir = new List<Entry>();
