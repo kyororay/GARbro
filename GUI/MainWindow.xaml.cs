@@ -93,7 +93,7 @@ namespace GARbro.GUI
             
             pathLine.EnterKeyDown += acb_OnKeyDown;
 
-            Recently_List_Update();
+            RecentlyListUpdate();
 
             //プロパティの初期化
             VolumeValue = Settings.Default.appVolumeValue;
@@ -129,7 +129,8 @@ namespace GARbro.GUI
             //    SetStatusText (guiStrings.MsgReady);
 
             InitScaleSetting();
-            Mask_List_Update();
+            MaskListUpdate();
+            CursorSetting();
         }
 
         void WindowKeyDown (object sender, KeyEventArgs e)
@@ -330,8 +331,8 @@ namespace GARbro.GUI
         {
             SaveCurrentPosition();
             ViewModel = vm;
-            Mask_List_Update();
-            Recently_List_Update();
+            MaskListUpdate();
+            RecentlyListUpdate();
         }
 
         DirectoryViewModel GetNewViewModel (string path)
@@ -850,8 +851,8 @@ namespace GARbro.GUI
                 ViewModel = vm;
                 if (null != pos.Item)
                     lv_SelectItem (pos.Item);
-                Mask_List_Update();
-                Recently_List_Update();
+                MaskListUpdate();
+                RecentlyListUpdate();
                 return true;
             }
             catch (Exception X)
@@ -859,8 +860,8 @@ namespace GARbro.GUI
                 // if VFS.FullPath throws an exception, ViewModel becomes inconsistent at this point
                 // and should be rebuilt
                 ViewModel = CreateViewModel (VFS.Top.CurrentDirectory, true);
-                Mask_List_Update();
-                Recently_List_Update();
+                MaskListUpdate();
+                RecentlyListUpdate();
                 SetStatusText (X.Message);
                 return false;
             }
@@ -1385,7 +1386,7 @@ namespace GARbro.GUI
         }
 
         // マスク用ComboBoxがロードされたら実行
-        private void Mask_Bar_Loaded(object sender, RoutedEventArgs e)
+        private void MaskBarLoaded(object sender, RoutedEventArgs e)
         {
             var text_box = (TextBox)Mask.Template.FindName("PART_EditableTextBox", Mask);
             Mask.Text = "*.*";
@@ -1395,7 +1396,7 @@ namespace GARbro.GUI
         }
 
         // マスク用ComboBoxのプルダウンメニュー更新
-        private void Mask_List_Update()
+        private void MaskListUpdate()
         {
             try
             {
@@ -1419,7 +1420,7 @@ namespace GARbro.GUI
         }
 
         // 最近使用したファイル用ComboBoxのプルダウンメニュー更新
-        private void Recently_List_Update()
+        private void RecentlyListUpdate()
         {
             try
             {
@@ -1433,8 +1434,20 @@ namespace GARbro.GUI
             }
         }
 
+        //マウスカーソル設定
+        private void CursorSetting()
+        {
+            var asm = Assembly.GetExecutingAssembly();
+            //イメージプレビューウィンドウ
+            ImageCanvas.DataContext = new
+            {
+                Grab = new Cursor(asm.GetManifestResourceStream(asm.GetName().Name + ".Images.Cursors.grab.cur")),
+                Grabbing = new Cursor(asm.GetManifestResourceStream(asm.GetName().Name + ".Images.Cursors.grabbing.cur"))
+            };
+        }
+
         // 最近使用したファイル用ComboBoxを閉じた際に実行
-        private void RecentlyPath_DropDownClosed(object sender, EventArgs e)
+        private void RecentlyPathDropDownClosed(object sender, EventArgs e)
         {
             if (RecentlyPath.Text != "") //プルダウンメニュー開いて何も選択しなかった場合は何もしない
             {

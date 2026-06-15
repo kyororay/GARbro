@@ -320,7 +320,7 @@
 
                     <!--アドレスバー-->
                     <StackPanel x:Name="RecentlyWidget" Grid.Column="0" DockPanel.Dock="Top" VerticalAlignment="Stretch" Margin="5,6,0,-10">
-                        <ComboBox Name="RecentlyPath" Height="22" Margin="0" IsEditable="True" BorderThickness="1,1,0,1" DropDownClosed="RecentlyPath_DropDownClosed" />
+                        <ComboBox Name="RecentlyPath" Height="22" Margin="0" IsEditable="True" BorderThickness="1,1,0,1" DropDownClosed="RecentlyPathDropDownClosed" />
                     </StackPanel>
                     <StackPanel x:Name="PathWidget" Grid.Column="0" DockPanel.Dock="Top" VerticalAlignment="Stretch" Margin="5,6,17,-10">
                         <local:ExtAutoCompleteBox x:Name="pathLine" Height="22" Background="White" BorderBrush="{Binding ElementName=RecentlyPath, Path=BorderBrush}" Margin="0" VerticalAlignment="Stretch" BorderThickness="1,1,0,1"/>
@@ -345,7 +345,7 @@
 
                     <!--フィルターバー-->
                     <StackPanel x:Name="FilterWidget" ToolTip="{x:Static s:guiStrings.LabelEnterMask}" Grid.Column="0" DockPanel.Dock="Top" VerticalAlignment="Stretch" Margin="5,6,5,-10">
-                        <ComboBox Loaded="Mask_Bar_Loaded" Name="Mask" IsEditable="True" Height="22" Margin="0" BorderThickness="1,1,0,1"/>
+                        <ComboBox Loaded="MaskBarLoaded" Name="Mask" IsEditable="True" Height="22" Margin="0" BorderThickness="1,1,0,1"/>
                         <StackPanel.InputBindings>
                             <KeyBinding Key="Enter" Command="{x:Static local:Commands.Filter}"/>
                         </StackPanel.InputBindings>
@@ -514,7 +514,7 @@
                     </ScrollViewer.InputBindings>
                     <Image Name="ImageCanvas" Stretch="None" UseLayoutRounding="True" SnapsToDevicePixels="True"
                            local:TouchScrolling.IsEnabled="True" RenderOptions.BitmapScalingMode="NearestNeighbor"
-                           Cursor="Images/Cursors/grab.cur" local:TouchScrolling.DraggingCursor="Images/Cursors/grabbing.cur" />
+                           Cursor="{Binding Grab}" local:TouchScrolling.DraggingCursor="{Binding Grabbing}" />
                 </ScrollViewer>
                 <jv:TextViewer x:Name="TextView" Visibility="Collapsed" BorderThickness="1,0,0,0" BorderBrush="Black"/>
             </Grid>

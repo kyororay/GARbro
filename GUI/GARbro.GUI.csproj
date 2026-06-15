@@ -366,14 +366,10 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Images\Cursors\grab.cur">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
+    <EmbeddedResource Include="Images\Cursors\grab.cur" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Images\Cursors\grabbing.cur">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
+    <EmbeddedResource Include="Images\Cursors\grabbing.cur" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Images\64x64\actions.png" />
@@ -400,8 +396,8 @@
     </PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>echo d | xcopy /e /y "$(SolutionDir)\GUI\Images\Cursors" "$(TargetDir)\Images\Cursors"
-</PostBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
   </PropertyGroup>
   <Import Project="..\packages\System.ValueTuple.4.6.2\build\net471\System.ValueTuple.targets" Condition="Exists('..\packages\System.ValueTuple.4.6.2\build\net471\System.ValueTuple.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
