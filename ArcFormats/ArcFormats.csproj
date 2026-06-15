@@ -1158,10 +1158,6 @@
       <Project>{2935be57-c4e0-43e7-86de-c1848c820b19}</Project>
       <Name>GARbro.GUI</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Net20\Net20.csproj">
-      <Project>{73b6c693-9846-4d33-8300-a80239fcfff9}</Project>
-      <Name>Net20</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
