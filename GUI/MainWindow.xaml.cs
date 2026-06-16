@@ -926,7 +926,7 @@ namespace GARbro.GUI
             }
         }
 
-        //アーカイブへのファイルアクセスを解除（アンマネージメントメモリの開放）
+        //アーカイブへのファイルアクセスを解除（アンマネージドメモリの開放）
         public void ArcDispose()
         {
             var arc = VFS.CurrentArchive;
