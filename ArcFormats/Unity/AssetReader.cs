@@ -24,6 +24,7 @@
 //
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -60,8 +61,9 @@ namespace GameRes.Formats.Unity
 
         public Action       Align;
         public Func<ushort> ReadUInt16;
-        public Func<short>  ReadInt16;
         public Func<uint>   ReadUInt32;
+        public Func<ulong>  ReadUInt64;
+        public Func<short>  ReadInt16;
         public Func<int>    ReadInt32;
         public Func<long>   ReadInt64;
         public Func<long>   ReadId;
@@ -82,6 +84,7 @@ namespace GameRes.Formats.Unity
             {
                 ReadUInt16 = () => m_input.ReadUInt16();
                 ReadUInt32 = () => m_input.ReadUInt32();
+                ReadUInt64 = () => m_input.ReadUInt64();
                 ReadInt16 = () => m_input.ReadInt16();
                 ReadInt32 = () => m_input.ReadInt32();
                 ReadInt64 = () => m_input.ReadInt64();
@@ -90,6 +93,7 @@ namespace GameRes.Formats.Unity
             {
                 ReadUInt16 = () => Binary.BigEndian (m_input.ReadUInt16());
                 ReadUInt32 = () => Binary.BigEndian (m_input.ReadUInt32());
+                ReadUInt64 = () => Binary.BigEndian (m_input.ReadUInt64());
                 ReadInt16 = () => Binary.BigEndian (m_input.ReadInt16());
                 ReadInt32 = () => Binary.BigEndian (m_input.ReadInt32());
                 ReadInt64 = () => Binary.BigEndian (m_input.ReadInt64());
@@ -130,6 +134,30 @@ namespace GameRes.Formats.Unity
         public void Skip (int count)
         {
             m_input.Seek (count, SeekOrigin.Current);
+        }
+
+        public void AlignStream(int alignment)
+        {
+            var pos = Position;
+            var mod = pos % alignment;
+            if (mod != 0)
+                Position += alignment - mod;
+        }
+
+        public void CopyToStream(Stream destination, long size)
+        {
+            const int BufferSize = 0x14000;
+            var buffer = new byte[BufferSize];
+            for (var left = size; left > 0; left -= BufferSize)
+            {
+                int toRead = BufferSize < left ? BufferSize : (int)left;
+                int read = Source.Read(buffer, 0, toRead);
+                destination.Write(buffer, 0, read);
+                if (read != toRead)
+                {
+                    return;
+                }
+            }
         }
 
         /// <summary>
@@ -185,6 +213,64 @@ namespace GameRes.Formats.Unity
         public bool ReadBool ()
         {
             return ReadByte() != 0;
+        }
+
+        internal T[] ReadArray<T>(Func<T> del, int length)
+        {
+            if (length < 0x1000)
+            {
+                var array = new T[length];
+                for (int i = 0; i < length; i++)
+                {
+                    array[i] = del();
+                }
+                return array;
+            }
+            else
+            {
+                var list = new List<T>();
+                for (int i = 0; i < length; i++)
+                {
+                    list.Add(del());
+                }
+                return list.ToArray();
+            }
+        }
+
+        public short[] ReadInt16Array(int length = -1)
+        {
+            if (length == -1)
+            {
+                length = ReadInt32();
+            }
+            return ReadArray(ReadInt16, length);
+        }
+
+        public ushort[] ReadUInt16Array(int length = -1)
+        {
+            if (length == -1)
+            {
+                length = ReadInt32();
+            }
+            return ReadArray(ReadUInt16, length);
+        }
+
+        public int[] ReadInt32Array(int length = -1)
+        {
+            if (length == -1)
+            {
+                length = ReadInt32();
+            }
+            return ReadArray(ReadInt32, length);
+        }
+
+        public uint[] ReadUInt32Array(int length = -1)
+        {
+            if (length == -1)
+            {
+                length = ReadInt32();
+            }
+            return ReadArray(ReadUInt32, length);
         }
 
         [StructLayout(LayoutKind.Explicit)]

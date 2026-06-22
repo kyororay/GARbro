@@ -43,6 +43,11 @@ namespace GameRes.Formats.Fmod
         public override uint     Signature { get { return 0x35425346; } } // 'FSB5'
         public override bool      CanWrite { get { return false; } }
 
+        public Fsb5Audio()
+        {
+            Extensions = new string[] { "fsb" };
+        }
+
         public override SoundInput TryOpen (IBinaryStream file)
         {
             var fsb = new Fsb5Decoder (file);
