@@ -248,7 +248,7 @@ namespace GameRes.Formats.Artemis
             bool is_enlarged_base = Path.GetFileName(entry.Name) == "1.png";
             bool is_enlarged = Path.GetFileName(Path.GetDirectoryName(entry.Name)) == "拡大" || is_enlarged_base;
 
-            SetParamsType1(arc, entry, is_enlarged);
+            SetParams(arc, entry, is_enlarged);
             if (!m_info.Flag)
                 return decoder;
 
@@ -313,8 +313,8 @@ namespace GameRes.Formats.Artemis
             return new BitmapSourceDecoder(source);
         }
 
-        //メタデータ取得 for しろくまだんご
-        private void SetParamsType1(ArcFile arc, Entry entry, bool is_enlarged)
+        //メタデータ取得
+        private void SetParams(ArcFile arc, Entry entry, bool is_enlarged)
         {
             if (!m_info.Flag) //画像データ共通設定を未取得
             {
