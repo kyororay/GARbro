@@ -23,22 +23,20 @@
 // IN THE SOFTWARE.
 //
 
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using System.Windows.Media.Imaging;
-using System.Windows.Media;
+using System.Text.RegularExpressions;
 using System.Windows;
-using System.Runtime.InteropServices;
-using System.Linq;
-using System;
-using GameRes;
-using System.Runtime.InteropServices.ComTypes;
-using static System.Net.Mime.MediaTypeNames;
-using GARbro.GUI;
-using static ICSharpCode.SharpZipLib.Zip.ExtendedUnixData;
+using System.Windows.Ink;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace GameRes.Formats.Artemis
 {
@@ -67,7 +65,7 @@ namespace GameRes.Formats.Artemis
             Settings = new[] { PfsEncoding };
         }
 
-        internal static PfsMetaData m_info = new PfsMetaData { Flag = false };
+        internal static PfsMetaData m_info = new PfsMetaData { Flag = false, BPP = 32 };
 
         EncodingSetting PfsEncoding = new EncodingSetting("PFSEncodingCP", "DefaultEncoding");
 
@@ -163,92 +161,160 @@ namespace GameRes.Formats.Artemis
         public override IImageDecoder OpenImage(ArcFile arc, Entry entry)
         {
             var decoder = base.OpenImage(arc, entry);
-            //しろくまだんごの判定 ⇒ *.csvファイルの有無
-            if (arc.Dir.FirstOrDefault(e => e.Name.Contains(".csv")) == null)
-                return decoder;
-            
-            try
-            {
-                bool is_enlarged_base = Path.GetFileName(entry.Name) == "1.png";
-                bool is_enlarged = Path.GetFileName(Path.GetDirectoryName(entry.Name)) == "拡大" || is_enlarged_base;
 
-                SetParams(arc, entry, is_enlarged);
-                if (!m_info.Flag)
-                    return decoder;
-
-                BitmapSource source;
-                if (is_enlarged_base)
-                    source = CreateEnlargedBase(arc, entry);
-                else
-                    source = decoder.Image.Bitmap;
-
-                m_info.iWidth = source.PixelWidth;
-                m_info.iHeight = source.PixelHeight;
-
-                int base_width, base_height;
-                if (is_enlarged)
-                {
-                    base_width = m_info.EnBaseWidth;
-                    base_height = m_info.EnBaseHeight;
-                }
-                else
-                {
-                    base_width = m_info.iBaseWidth;
-                    base_height = m_info.iBaseHeight;
-                }
-
-                int byte_depth = m_info.BPP / 8; //ビット深度（バイト換算）
-                int stride = base_width * byte_depth; //1行当たりのバイト数
-                var pixels = new byte[stride * base_height];
-                int offset;
-                Int32Rect source_rect; //ソース画像の切り取り領域
-
-                if (m_info.Width == base_width + m_info.ScrOffsetX * 2 && m_info.Height == base_height + m_info.ScrOffsetY * 2) //ベース画像
-                {
-                    source_rect = new Int32Rect(m_info.ScrOffsetX, m_info.ScrOffsetY, base_width, base_height);
-                    offset = 0;
-                }
-                else if ( //差分画像(メタデータ正常)
-                    base_width + m_info.ScrOffsetX * 2 > m_info.Width + m_info.OffsetX &&
-                    base_height + m_info.ScrOffsetY * 2 > m_info.Height + m_info.OffsetY &&
-                    m_info.OffsetX != -1 && m_info.OffsetY != -1 &&
-                    !(is_enlarged && m_info.EnBaseWidth == 0 && m_info.EnBaseHeight == 0)
-                    )
-                {
-                    source_rect = Int32Rect.Empty;
-                    offset = (m_info.OffsetY - m_info.ScrOffsetY) * stride + (m_info.OffsetX - m_info.ScrOffsetX) * byte_depth;
-                }
-                else //差分画像(メタデータ異常)
-                    return decoder;
-
-
-                source.CopyPixels(source_rect, pixels, stride, offset);
-                source = BitmapImage.Create(
-                    base_width,
-                    base_height,
-                    ImageData.DefaultDpiX,
-                    ImageData.DefaultDpiY,
-                    PixelFormats.Bgra32,
-                    null,
-                    pixels,
-                    stride
-                    );
-
-                //decoder.Image.Bitmap = source;
-                decoder = new BitmapSourceDecoder(source);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(entry.Name);
-                Console.WriteLine(e.Message);
-                Console.WriteLine(e.StackTrace);
-            }
+            if (arc.Dir.FirstOrDefault(e => e.Name.Contains(".csv")) != null)
+                decoder = OverlapImageType1(arc, entry, decoder);
+            else if (arc.Dir.FirstOrDefault(e => e.Name.Contains(".ipt")) != null)
+                decoder = OverlapImageType2(arc, entry, decoder);
 
             return decoder;
         }
 
+        //差分画像の重ね合わせ for あざらしそふと
+        private IImageDecoder OverlapImageType2(ArcFile arc, Entry entry, IImageDecoder decoder)
+        {
+            string ipt_name = Path.ChangeExtension(entry.Name, "ipt");
+            if (arc.Dir.ToList().Exists(e => e.Name == ipt_name))
+            {
+                //iptファイルの読み込み
+                Entry ipt_ent = arc.Dir.ToList().Find(e => e.Name == ipt_name);
+                using (var input = arc.OpenEntry(ipt_ent))
+                {
+                    string text = input.ReadCString().Replace(" ", "").Replace("\t", "").Replace("\r\n", "").Replace("ipt=", "").Replace("=", ":").Replace("{id:", "diff:{id:").Replace("base:{", "base:{file:");
+                    var json = JObject.Parse(text);
+                    m_info.FileName = Path.GetDirectoryName(entry.Name) + "\\" + (string)json["base"]["file"] + Path.GetExtension(entry.Name);
+                    m_info.BaseWidth = (uint)json["base"]["w"];
+                    m_info.BaseHeight = (uint)json["base"]["h"];
+                    m_info.OffsetX = (int)json["diff"]["x"];
+                    m_info.OffsetY = (int)json["diff"]["y"];
+                }
+
+                int byte_depth = m_info.BPP / 8;
+                int stride = m_info.iBaseWidth * byte_depth;
+                var base_pixels = new byte[stride * m_info.BaseHeight];
+
+                //ベース画像
+                var base_entry = arc.Dir.FirstOrDefault(e => e.Name == m_info.FileName);
+                if (base_entry != null)
+                {
+                    using (var base_image = arc.OpenImage(base_entry))
+                    {
+                        base_image.Image.Bitmap.CopyPixels(Int32Rect.Empty, base_pixels, stride, 0);
+                    }
+                }
+
+                //オフセット付加
+                int offset = m_info.OffsetY * stride + m_info.OffsetX * byte_depth;
+                var source_pixels = new byte[stride * m_info.BaseHeight];
+                Int32Rect rect = new Int32Rect() { X = 0, Y = 0 };
+                rect.Width = Math.Min(decoder.Image.Bitmap.PixelWidth, m_info.iBaseWidth);
+                rect.Height = Math.Min(decoder.Image.Bitmap.PixelHeight, m_info.iBaseHeight);
+                decoder.Image.Bitmap.CopyPixels(rect, source_pixels, stride, offset);
+
+                //重ね合わせ
+                if (base_entry == null)
+                    base_pixels = source_pixels;
+                else
+                {
+                    for (int i = 3; i < base_pixels.Length; i += 4)
+                    {
+                        if (source_pixels[i] != 0x00) //透明でない
+                        {
+                            base_pixels[i - 1] = source_pixels[i - 1]; //R
+                            base_pixels[i - 2] = source_pixels[i - 2]; //G
+                            base_pixels[i - 3] = source_pixels[i - 3]; //B
+                        }
+                    }
+                }
+
+                return new BitmapSourceDecoder(BitmapImage.Create(
+                    m_info.iBaseWidth,
+                    m_info.iBaseHeight,
+                    ImageData.DefaultDpiX,
+                    ImageData.DefaultDpiY,
+                    PixelFormats.Bgra32,
+                    null,
+                    base_pixels,
+                    stride
+                    ));
+            }
+            else
+                return decoder;
+        }
+
+        //差分画像の重ね合わせ for しろくまだんご
+        private IImageDecoder OverlapImageType1(ArcFile arc, Entry entry, IImageDecoder decoder)
+        {
+            bool is_enlarged_base = Path.GetFileName(entry.Name) == "1.png";
+            bool is_enlarged = Path.GetFileName(Path.GetDirectoryName(entry.Name)) == "拡大" || is_enlarged_base;
+
+            SetParamsType1(arc, entry, is_enlarged);
+            if (!m_info.Flag)
+                return decoder;
+
+            BitmapSource source;
+            if (is_enlarged_base)
+                source = CreateEnlargedBase(arc, entry);
+            else
+                source = decoder.Image.Bitmap;
+
+            m_info.iWidth = source.PixelWidth;
+            m_info.iHeight = source.PixelHeight;
+
+            int base_width, base_height;
+            if (is_enlarged)
+            {
+                base_width = m_info.EnBaseWidth;
+                base_height = m_info.EnBaseHeight;
+            }
+            else
+            {
+                base_width = m_info.iBaseWidth;
+                base_height = m_info.iBaseHeight;
+            }
+
+            int byte_depth = m_info.BPP / 8; //ビット深度（バイト換算）
+            int stride = base_width * byte_depth; //1行当たりのバイト数
+            var pixels = new byte[stride * base_height];
+            int offset;
+            Int32Rect source_rect; //ソース画像の切り取り領域
+
+            if (m_info.Width == base_width + m_info.ScrOffsetX * 2 && m_info.Height == base_height + m_info.ScrOffsetY * 2) //ベース画像
+            {
+                source_rect = new Int32Rect(m_info.ScrOffsetX, m_info.ScrOffsetY, base_width, base_height);
+                offset = 0;
+            }
+            else if ( //差分画像(メタデータ正常)
+                base_width + m_info.ScrOffsetX * 2 > m_info.Width + m_info.OffsetX &&
+                base_height + m_info.ScrOffsetY * 2 > m_info.Height + m_info.OffsetY &&
+                m_info.OffsetX != -1 && m_info.OffsetY != -1 &&
+                !(is_enlarged && m_info.EnBaseWidth == 0 && m_info.EnBaseHeight == 0)
+                )
+            {
+                source_rect = Int32Rect.Empty;
+                offset = (m_info.OffsetY - m_info.ScrOffsetY) * stride + (m_info.OffsetX - m_info.ScrOffsetX) * byte_depth;
+            }
+            else //差分画像(メタデータ異常)
+                return decoder;
+
+            source.CopyPixels(source_rect, pixels, stride, offset);
+            source = BitmapImage.Create(
+                base_width,
+                base_height,
+                ImageData.DefaultDpiX,
+                ImageData.DefaultDpiY,
+                PixelFormats.Bgra32,
+                null,
+                pixels,
+                stride
+                );
+
+            //decoder.Image.Bitmap = source;
+            return new BitmapSourceDecoder(source);
+        }
+
         //メタデータ取得 for しろくまだんご
-        private void SetParams(ArcFile arc, Entry entry, bool is_enlarged)
+        private void SetParamsType1(ArcFile arc, Entry entry, bool is_enlarged)
         {
             if (!m_info.Flag) //画像データ共通設定を未取得
             {
@@ -275,7 +341,6 @@ namespace GameRes.Formats.Artemis
                         m_info.ScrOffsetY = scr_offset_y;
                     }
 
-                    m_info.BPP = 32;
                     m_info.Flag = true;
                 }
                 catch
