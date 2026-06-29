@@ -2,34 +2,26 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Runtime.InteropServices;
-using System.Runtime.Remoting.Messaging;
-using System.Runtime.Remoting.Metadata.W3cXsd2001;
-using System.Text;
-using System.Threading.Tasks;
 using GameRes;
 using GameRes.Formats.Cyberworks;
 using GameRes.Formats.DxLib;
 using GameRes.Formats.ExHibit;
 using GameRes.Formats.KiriKiri;
+using GameRes.Formats.Majiro;
 using GameRes.Formats.Malie;
 using GameRes.Formats.Musica;
 using GameRes.Formats.NonColor;
 using GameRes.Formats.ShiinaRio;
 using GameRes.Formats.Strings;
-using Microsoft.SqlServer.Server;
-using static System.Net.Mime.MediaTypeNames;
-using static GameRes.Formats.Lucifen.LpkOpener;
 
 namespace SchemeTool
 {
     class Program
     {
-        static void Main(string[] args)
+        static void Main()
         {
             var write_flag = true;
-            var mode = 5;
+            var mode = 12;
             /*
             0 : format tag
             1 : game_map
@@ -43,6 +35,7 @@ namespace SchemeTool
             9 : Musica.MusicaScheme
             10: Malie.MalieScheme
             11: HorkEye.ArcDatScheme
+            12: Majiro.RctScheme
             */
 
             try
@@ -650,6 +643,16 @@ namespace SchemeTool
 
                     scheme.KnownSchemes["姉小路直子と銀色の死神"] = new Scheme("姉小路直子と銀色の死神")
                     { EvIdx = new short[] { 1, 2, 999 }, EvIsHex = false };
+                }
+                else if (mode == 12)
+                {
+                    Console.WriteLine("<---------- Majiro.RctScheme ---------->");
+                    var scheme = FormatCatalog.Instance.ImageFormats.FirstOrDefault(a => a.Tag == "RCT" && a.Description == "Majiro game engine RGB image format").Scheme as RctScheme;
+                    scheme.KnownKeys["幻のディストピア"] = "まかさなそん。嫌なわけないですし";
+                    scheme.KnownKeys["幻のディストピア 仮想世界からの贈り物"] = "顔おかしいんじゃないですか？";
+
+                    foreach (var item in scheme.KnownKeys)
+                        Console.WriteLine("{0} : {1}", item.Key, item.Value);
                 }
 
                 if (write_flag)
