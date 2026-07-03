@@ -12,15 +12,13 @@ https://github.com/crskycode/GARbro
 
 開発環境
 ---------
-Visual Studio 2022（.NET Framework v4.8）
-
-IDA Free 9.1
-
-Kasat
-
-Stirling
-
-サクラエディタ
+Visual Studio 2022（.NET Framework v4.8）  
+Ghidra  
+IDA Free  
+Kasat  
+Stirling  
+WinMerge  
+サクラエディタ  
 
 実装機能、変更点
 ---------
