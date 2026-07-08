@@ -28,10 +28,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
+using System.Windows.Markup;
 using GameRes.Compression;
 using GameRes.Utility;
 using NAudio.Gui;
+using Newtonsoft.Json.Linq;
 
 namespace GameRes.Formats.KiriKiri
 {
@@ -55,40 +58,40 @@ namespace GameRes.Formats.KiriKiri
         /// </summary>
         public bool ObfuscatedIndex { get; set; }
 
-        public override string ToString ()
+        public override string ToString()
         {
             return this.GetType().Name;
         }
 
-        public virtual byte Decrypt (Xp3Entry entry, long offset, byte value)
+        public virtual byte Decrypt(Xp3Entry entry, long offset, byte value)
         {
             byte[] buffer = new byte[1] { value };
-            Decrypt (entry, offset, buffer, 0, 1);
+            Decrypt(entry, offset, buffer, 0, 1);
             return buffer[0];
         }
 
-        public abstract void Decrypt (Xp3Entry entry, long offset, byte[] values, int pos, int count);
+        public abstract void Decrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count);
 
-        public virtual void Encrypt (Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        public virtual void Encrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
         {
-            throw new NotImplementedException (Strings.arcStrings.MsgEncNotImplemented);
+            throw new NotImplementedException(Strings.arcStrings.MsgEncNotImplemented);
         }
 
         /// <summary>
         /// Perform necessary initialization specific to an archive being opened.
         /// </summary>
-        public virtual void Init (ArcFile arc)
+        public virtual void Init(ArcFile arc)
         {
         }
 
         /// <summary>
         /// Read entry name from archive index.
         /// </summary>
-        public virtual string ReadName (BinaryReader header)
+        public virtual string ReadName(BinaryReader header)
         {
             int name_size = header.ReadInt16();
             if (name_size > 0 && name_size <= 0x100)
-                return new string (header.ReadChars (name_size));
+                return new string(header.ReadChars(name_size));
             else
                 return null;
         }
@@ -96,90 +99,90 @@ namespace GameRes.Formats.KiriKiri
         /// <summary>
         /// Post-process entry stream.
         /// </summary>
-        public virtual Stream EntryReadFilter (Xp3Entry entry, Stream input)
+        public virtual Stream EntryReadFilter(Xp3Entry entry, Stream input)
         {
             if (entry.UnpackedSize <= 5 || "audio" == entry.Type)
                 return input;
 
             var header = new byte[5];
-            input.Read (header, 0, 5);
-            uint signature = header.ToUInt32 (0);
-            GuessEntryTypeBySignature (entry, signature);
+            input.Read(header, 0, 5);
+            uint signature = header.ToUInt32(0);
+            GuessEntryTypeBySignature(entry, signature);
             if (0x184D2204 == signature) // LZ4 magic
             {
                 // assume no scripts are compressed using LZ4, return decompressed stream right away
-                return DecompressLz4 (entry, header, input);
+                return DecompressLz4(entry, header, input);
             }
             if (0x66646D == signature) // 'mdf'
             {
-                return DecompressMdf (entry, header, input);
+                return DecompressMdf(entry, header, input);
             }
             if ((signature & 0xFF00FFFFu) == 0xFF00FEFEu && header[2] < 3 && 0xFE == header[4])
-                return DecryptScript (header[2], input, entry.UnpackedSize);
+                return DecryptScript(header[2], input, entry.UnpackedSize);
 
             if (!input.CanSeek)
-                return new PrefixStream (header, input);
+                return new PrefixStream(header, input);
             input.Position = 0;
             return input;
         }
 
-        internal Stream DecompressMdf (Xp3Entry entry, byte[] header, Stream input)
+        internal Stream DecompressMdf(Xp3Entry entry, byte[] header, Stream input)
         {
             if (header.Length != 5)
-                throw new ArgumentException ("Invalid header length for DecompressMdf", "header");
+                throw new ArgumentException("Invalid header length for DecompressMdf", "header");
             var mdf_header = new byte[4] { header[4], 0, 0, 0 };
-            input.Read (mdf_header, 1, 3);
-            entry.UnpackedSize = mdf_header.ToUInt32 (0);
+            input.Read(mdf_header, 1, 3);
+            entry.UnpackedSize = mdf_header.ToUInt32(0);
             entry.IsPacked = true;
-            return new ZLibStream (input, CompressionMode.Decompress);
+            return new ZLibStream(input, CompressionMode.Decompress);
         }
 
-        internal Stream DecompressLz4 (Xp3Entry entry, byte[] header, Stream input)
+        internal Stream DecompressLz4(Xp3Entry entry, byte[] header, Stream input)
         {
             if (header.Length != 5)
-                throw new ArgumentException ("Invalid header length for DecompressLz4", "header");
-            var info = new Lz4FrameInfo (header[4]);
-            info.SetBlockSize (input.ReadByte());
+                throw new ArgumentException("Invalid header length for DecompressLz4", "header");
+            var info = new Lz4FrameInfo(header[4]);
+            info.SetBlockSize(input.ReadByte());
             if (info.HasContentLength)
             {
-                input.Read (header, 0, 4);
-                long length = header.ToUInt32 (0);
-                input.Read (header, 0, 4);
-                length |= (long)header.ToUInt32 (0) << 32;
+                input.Read(header, 0, 4);
+                long length = header.ToUInt32(0);
+                input.Read(header, 0, 4);
+                length |= (long)header.ToUInt32(0) << 32;
                 info.OriginalLength = length;
                 entry.UnpackedSize = (uint)length;
                 entry.IsPacked = true;
             }
             if (info.HasDictionary)
             {
-                input.Read (header, 0, 4);
-                info.DictionaryId = header.ToInt32 (0);
+                input.Read(header, 0, 4);
+                info.DictionaryId = header.ToInt32(0);
             }
             input.ReadByte(); // skip descriptor checksum
-            return new Lz4Stream (input, info);
+            return new Lz4Stream(input, info);
         }
 
-        internal Stream DecryptScript (int enc_type, Stream input, uint unpacked_size)
+        internal Stream DecryptScript(int enc_type, Stream input, uint unpacked_size)
         {
-            using (var reader = new BinaryReader (input, Encoding.Unicode, true))
+            using (var reader = new BinaryReader(input, Encoding.Unicode, true))
             {
                 if (2 == enc_type)
                 {
                     reader.ReadInt64(); // packed_size
                     reader.ReadInt64(); // unpacked_size
-                    return new ZLibStream (input, CompressionMode.Decompress);
+                    return new ZLibStream(input, CompressionMode.Decompress);
                 }
-                var output = new MemoryStream ((int)unpacked_size+2);
-                using (var writer = new BinaryWriter (output, Encoding.Unicode, true))
+                var output = new MemoryStream((int)unpacked_size + 2);
+                using (var writer = new BinaryWriter(output, Encoding.Unicode, true))
                 {
-                    writer.Write ('\xFEFF'); // BOM
+                    writer.Write('\xFEFF'); // BOM
                     int c;
                     if (1 == enc_type)
                     {
                         while ((c = reader.Read()) != -1)
                         {
                             c = (c & 0xAAAA) >> 1 | (c & 0x5555) << 1;
-                            writer.Write ((char)c);
+                            writer.Write((char)c);
                         }
                     }
                     else
@@ -189,7 +192,7 @@ namespace GameRes.Formats.KiriKiri
                             if (c >= 0x20)
                             {
                                 c = c ^ (((c & 0xFE) << 8) ^ 1);
-                                writer.Write ((char)c);
+                                writer.Write((char)c);
                             }
                         }
                     }
@@ -213,9 +216,9 @@ namespace GameRes.Formats.KiriKiri
             { 0x584d4b4a, "image" }, // TLG
         };
 
-        internal void GuessEntryTypeBySignature (Entry entry, uint signature)
+        internal void GuessEntryTypeBySignature(Entry entry, uint signature)
         {
-            if (FileTypesMap.TryGetValue (signature, out var type))
+            if (FileTypesMap.TryGetValue(signature, out var type))
                 entry.Type = type;
         }
     }
@@ -223,15 +226,15 @@ namespace GameRes.Formats.KiriKiri
     [Serializable]
     public class NoCrypt : ICrypt
     {
-        public override byte Decrypt (Xp3Entry entry, long offset, byte value)
+        public override byte Decrypt(Xp3Entry entry, long offset, byte value)
         {
             return value;
         }
-        public override void Decrypt (Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        public override void Decrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
         {
             return;
         }
-        public override void Encrypt (Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        public override void Encrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
         {
             return;
         }
@@ -242,7 +245,7 @@ namespace GameRes.Formats.KiriKiri
     {
         public override bool HashAfterCrypt { get { return true; } }
 
-        public override byte Decrypt (Xp3Entry entry, long offset, byte value)
+        public override byte Decrypt(Xp3Entry entry, long offset, byte value)
         {
             byte result = (byte)(value ^ 0x36);
             if (0x13 == offset)
@@ -252,25 +255,25 @@ namespace GameRes.Formats.KiriKiri
             return result;
         }
 
-        public override void Decrypt (Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        public override void Decrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
         {
             for (int i = 0; i < count; ++i)
             {
-                values[pos+i] ^= 0x36;
+                values[pos + i] ^= 0x36;
             }
             if (offset > 0x2ea29)
                 return;
             if (offset + count > 0x2ea29)
-                values[pos+0x2ea29-offset] ^= 3;
+                values[pos + 0x2ea29 - offset] ^= 3;
             if (offset > 0x13)
                 return;
             if (offset + count > 0x13)
-                values[pos+0x13-offset] ^= 1;
+                values[pos + 0x13 - offset] ^= 1;
         }
 
-        public override void Encrypt (Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        public override void Encrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
         {
-            Decrypt (entry, offset, values, pos, count);
+            Decrypt(entry, offset, values, pos, count);
         }
     }
 
@@ -279,59 +282,59 @@ namespace GameRes.Formats.KiriKiri
     {
         public override bool HashAfterCrypt { get { return true; } }
 
-        public override void Decrypt (Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        public override void Decrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
         {
             if (offset <= 0x103 && offset + count > 0x103)
-                values[pos+0x103-offset]--;
+                values[pos + 0x103 - offset]--;
             for (int i = 0; i < count; ++i)
             {
-                values[pos+i] ^= 0xB6;
+                values[pos + i] ^= 0xB6;
             }
             if (offset > 0x3F82)
                 return;
             if (offset + count > 0x3F82)
-                values[pos+0x3F82-offset] ^= 1;
+                values[pos + 0x3F82 - offset] ^= 1;
             if (offset > 0x83)
                 return;
             if (offset + count > 0x83)
-                values[pos+0x83-offset] ^= 3;
+                values[pos + 0x83 - offset] ^= 3;
         }
 
-        public override void Encrypt (Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        public override void Encrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
         {
             for (int i = 0; i < count; ++i)
             {
-                values[pos+i] ^= 0xB6;
+                values[pos + i] ^= 0xB6;
             }
             if (offset <= 0x3F82 && offset + count > 0x3F82)
-                values[pos+0x3F82-offset] ^= 1;
+                values[pos + 0x3F82 - offset] ^= 1;
             if (offset <= 0x83 && offset + count > 0x83)
-                values[pos+0x83-offset] ^= 3;
+                values[pos + 0x83 - offset] ^= 3;
             if (offset <= 0x103 && offset + count > 0x103)
-                values[pos+0x103-offset]++;
+                values[pos + 0x103 - offset]++;
         }
     }
 
     [Serializable]
     public class HashCrypt : ICrypt
     {
-        public override byte Decrypt (Xp3Entry entry, long offset, byte value)
+        public override byte Decrypt(Xp3Entry entry, long offset, byte value)
         {
             return (byte)(value ^ entry.Hash);
         }
 
-        public override void Decrypt (Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        public override void Decrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
         {
             byte key = (byte)entry.Hash;
             for (int i = 0; i < count; ++i)
             {
-                values[pos+i] ^= key;
+                values[pos + i] ^= key;
             }
         }
 
-        public override void Encrypt (Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        public override void Encrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
         {
-            Decrypt (entry, offset, values, pos, count);
+            Decrypt(entry, offset, values, pos, count);
         }
     }
 
@@ -346,39 +349,39 @@ namespace GameRes.Formats.KiriKiri
             set { m_key = value; }
         }
 
-        public XorCrypt (uint key)
+        public XorCrypt(uint key)
         {
             m_key = (byte)key;
         }
 
-        public override string ToString ()
+        public override string ToString()
         {
-            return string.Format ("{0}(0x{1:X02})", base.ToString(), m_key);
+            return string.Format("{0}(0x{1:X02})", base.ToString(), m_key);
         }
 
-        public override byte Decrypt (Xp3Entry entry, long offset, byte value)
+        public override byte Decrypt(Xp3Entry entry, long offset, byte value)
         {
             return (byte)(value ^ m_key);
         }
 
-        public override void Decrypt (Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        public override void Decrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
         {
             for (int i = 0; i < count; ++i)
             {
-                values[pos+i] ^= m_key;
+                values[pos + i] ^= m_key;
             }
         }
 
-        public override void Encrypt (Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        public override void Encrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
         {
-            Decrypt (entry, offset, values, pos, count);
+            Decrypt(entry, offset, values, pos, count);
         }
     }
 
     [Serializable]
     public class FlyingShineCrypt : ICrypt
     {
-        static private byte Adjust (uint hash, out int shift)
+        static private byte Adjust(uint hash, out int shift)
         {
             shift = (int)(hash & 0xff);
             if (0 == shift) shift = 0x0f;
@@ -387,32 +390,32 @@ namespace GameRes.Formats.KiriKiri
             return key;
         }
 
-        public override byte Decrypt (Xp3Entry entry, long offset, byte value)
+        public override byte Decrypt(Xp3Entry entry, long offset, byte value)
         {
             int shift;
-            byte xor = Adjust (entry.Hash, out shift);
-            return Binary.RotByteR ((byte)(value ^ xor), shift);
+            byte xor = Adjust(entry.Hash, out shift);
+            return Binary.RotByteR((byte)(value ^ xor), shift);
         }
 
-        public override void Decrypt (Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        public override void Decrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
         {
             int shift;
-            byte xor = Adjust (entry.Hash, out shift);
+            byte xor = Adjust(entry.Hash, out shift);
             for (int i = 0; i < count; ++i)
             {
-                byte data = (byte)(values[pos+i] ^ xor);
-                values[pos+i] = Binary.RotByteR (data, shift);
+                byte data = (byte)(values[pos + i] ^ xor);
+                values[pos + i] = Binary.RotByteR(data, shift);
             }
         }
 
-        public override void Encrypt (Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        public override void Encrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
         {
             int shift;
-            byte xor = Adjust (entry.Hash, out shift);
+            byte xor = Adjust(entry.Hash, out shift);
             for (int i = 0; i < count; ++i)
             {
-                byte data = Binary.RotByteL (values[pos+i], shift);
-                values[pos+i] = (byte)(data ^ xor);
+                byte data = Binary.RotByteL(values[pos + i], shift);
+                values[pos + i] = (byte)(data ^ xor);
             }
         }
     }
@@ -420,7 +423,7 @@ namespace GameRes.Formats.KiriKiri
     [Serializable]
     public class SeitenCrypt : ICrypt
     {
-        public override byte Decrypt (Xp3Entry entry, long offset, byte value)
+        public override byte Decrypt(Xp3Entry entry, long offset, byte value)
         {
             uint key = entry.Hash ^ (uint)offset;
             if (0 != (key & 2))
@@ -439,13 +442,13 @@ namespace GameRes.Formats.KiriKiri
             return value;
         }
 
-        public override void Decrypt (Xp3Entry entry, long offset, byte[] buffer, int pos, int count)
+        public override void Decrypt(Xp3Entry entry, long offset, byte[] buffer, int pos, int count)
         {
             for (int i = 0; i < count; ++i)
             {
                 int shift;
                 uint key = entry.Hash ^ (uint)offset;
-                byte v = buffer[pos+i];
+                byte v = buffer[pos + i];
                 if (0 != (key & 2))
                 {
                     shift = (int)key & 0x18;
@@ -462,28 +465,28 @@ namespace GameRes.Formats.KiriKiri
                     shift = (int)key & 0x10;
                     v -= (byte)(key >> shift);
                 }
-                buffer[pos+i] = v;
+                buffer[pos + i] = v;
                 ++offset;
             }
         }
 
-        public override void Encrypt (Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        public override void Encrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
         {
             for (int i = 0; i < count; ++i)
             {
                 uint key = entry.Hash ^ (uint)offset;
                 if (0 != (key & 8))
                 {
-                    values[pos+i] += (byte)(key >> (int)(key & 0x10));
+                    values[pos + i] += (byte)(key >> (int)(key & 0x10));
                 }
                 if (0 != (key & 4))
                 {
-                    values[pos+i] -= (byte)key;
+                    values[pos + i] -= (byte)key;
                 }
                 if (0 != (key & 2))
                 {
                     int ecx = (int)key & 0x18;
-                    values[pos+i] ^= (byte)((key >> ecx) | (key >> (ecx & 8)));
+                    values[pos + i] ^= (byte)((key >> ecx) | (key >> (ecx & 8)));
                 }
             }
         }
@@ -492,28 +495,28 @@ namespace GameRes.Formats.KiriKiri
     [Serializable]
     public class OkibaCrypt : ICrypt
     {
-        public override byte Decrypt (Xp3Entry entry, long offset, byte value)
+        public override byte Decrypt(Xp3Entry entry, long offset, byte value)
         {
             if (offset < 0x65)
                 return (byte)(value ^ (byte)(entry.Hash >> 4));
             uint key = entry.Hash;
             // 0,1,2,3 -> 1,0,3,2
             key = ((key & 0xff0000) << 8) | ((key & 0xff000000) >> 8)
-                | ((key & 0xff00) >> 8)   | ((key & 0xff) << 8);
+                | ((key & 0xff00) >> 8) | ((key & 0xff) << 8);
             key >>= 8 * ((int)(offset - 0x65) & 3);
             return (byte)(value ^ (byte)key);
         }
 
-        public override void Decrypt (Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        public override void Decrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
         {
             int i = 0;
             if (offset < 0x65)
             {
                 uint key = entry.Hash >> 4;
-                int limit = Math.Min (count, (int)(0x65 - offset));
+                int limit = Math.Min(count, (int)(0x65 - offset));
                 for (; i < limit; ++i)
                 {
-                    values[pos+i] ^= (byte)key;
+                    values[pos + i] ^= (byte)key;
                     ++offset;
                 }
             }
@@ -522,26 +525,26 @@ namespace GameRes.Formats.KiriKiri
                 offset -= 0x65;
                 uint key = entry.Hash;
                 key = ((key & 0xff0000) << 8) | ((key & 0xff000000) >> 8)
-                    | ((key & 0xff00) >> 8)   | ((key & 0xff) << 8);
+                    | ((key & 0xff00) >> 8) | ((key & 0xff) << 8);
                 do
                 {
-                    values[pos+i] ^= (byte)(key >> (8 * ((int)offset & 3)));
+                    values[pos + i] ^= (byte)(key >> (8 * ((int)offset & 3)));
                     ++offset;
                 }
                 while (++i < count);
             }
         }
 
-        public override void Encrypt (Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        public override void Encrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
         {
-            Decrypt (entry, offset, values, pos, count);
+            Decrypt(entry, offset, values, pos, count);
         }
     }
 
     [Serializable]
     public class DieselmineCrypt : ICrypt
     {
-        public override byte Decrypt (Xp3Entry entry, long offset, byte value)
+        public override byte Decrypt(Xp3Entry entry, long offset, byte value)
         {
             byte key = (byte)entry.Hash;
             if (offset < 123)
@@ -555,35 +558,35 @@ namespace GameRes.Formats.KiriKiri
             return value;
         }
 
-        public override void Decrypt (Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        public override void Decrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
         {
             byte key = (byte)entry.Hash;
             for (int i = 0; i < count && offset <= 0xffffffffL; ++i, ++offset)
             {
                 if (offset < 123)
-                    values[pos+i] ^= (byte)(21 * key);
+                    values[pos + i] ^= (byte)(21 * key);
                 else if (offset < 246)
-                    values[pos+i] += (byte)(-32 * key);
+                    values[pos + i] += (byte)(-32 * key);
                 else if (offset < 369)
-                    values[pos+i] ^= (byte)(43 * key);
+                    values[pos + i] ^= (byte)(43 * key);
                 else
-                    values[pos+i] += (byte)(-54 * key);
+                    values[pos + i] += (byte)(-54 * key);
             }
         }
 
-        public override void Encrypt (Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        public override void Encrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
         {
             byte key = (byte)entry.Hash;
             for (int i = 0; i < count && offset <= 0xffffffffL; ++i, ++offset)
             {
                 if (offset < 123)
-                    values[pos+i] ^= (byte)(21 * key);
+                    values[pos + i] ^= (byte)(21 * key);
                 else if (offset < 246)
-                    values[pos+i] -= (byte)(-32 * key);
+                    values[pos + i] -= (byte)(-32 * key);
                 else if (offset < 369)
-                    values[pos+i] ^= (byte)(43 * key);
+                    values[pos + i] ^= (byte)(43 * key);
                 else
-                    values[pos+i] -= (byte)(-54 * key);
+                    values[pos + i] -= (byte)(-54 * key);
             }
         }
     }
@@ -591,7 +594,7 @@ namespace GameRes.Formats.KiriKiri
     [Serializable]
     public class DameganeCrypt : ICrypt
     {
-        public override byte Decrypt (Xp3Entry entry, long offset, byte value)
+        public override byte Decrypt(Xp3Entry entry, long offset, byte value)
         {
             if (0 != (offset & 1))
                 return (byte)(value ^ entry.Hash);
@@ -599,27 +602,27 @@ namespace GameRes.Formats.KiriKiri
                 return (byte)(value ^ offset);
         }
 
-        public override void Decrypt (Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        public override void Decrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
         {
             for (int i = 0; i < count; ++i, ++offset)
             {
                 if (0 != (offset & 1))
-                    values[pos+i] ^= (byte)entry.Hash;
+                    values[pos + i] ^= (byte)entry.Hash;
                 else
-                    values[pos+i] ^= (byte)offset;
+                    values[pos + i] ^= (byte)offset;
             }
         }
 
-        public override void Encrypt (Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        public override void Encrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
         {
-            Decrypt (entry, offset, values, pos, count);
+            Decrypt(entry, offset, values, pos, count);
         }
     }
 
     [Serializable]
     public class NephriteCrypt : ICrypt
     {
-        public override byte Decrypt (Xp3Entry entry, long offset, byte value)
+        public override byte Decrypt(Xp3Entry entry, long offset, byte value)
         {
             if (0 != (offset & 1))
                 return (byte)(value ^ offset);
@@ -627,20 +630,20 @@ namespace GameRes.Formats.KiriKiri
                 return (byte)(value ^ entry.Hash);
         }
 
-        public override void Decrypt (Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        public override void Decrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
         {
             for (int i = 0; i < count; ++i, ++offset)
             {
                 if (0 != (offset & 1))
-                    values[pos+i] ^= (byte)offset;
+                    values[pos + i] ^= (byte)offset;
                 else
-                    values[pos+i] ^= (byte)entry.Hash;
+                    values[pos + i] ^= (byte)entry.Hash;
             }
         }
 
-        public override void Encrypt (Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        public override void Encrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
         {
-            Decrypt (entry, offset, values, pos, count);
+            Decrypt(entry, offset, values, pos, count);
         }
     }
 
@@ -666,84 +669,84 @@ namespace GameRes.Formats.KiriKiri
             0x1C, 0xD8, 0x62, 0x3F, 0xFD, 0xCF, 0x01, 0x3A, 0xE7, 0xC2, 0x19, 0x38, 0x6C, 0xC3, 0x90, 0x3E,
         };
 
-        public override byte Decrypt (Xp3Entry entry, long offset, byte value)
+        public override byte Decrypt(Xp3Entry entry, long offset, byte value)
         {
             return (byte)(value ^ KeyTable[offset & 0xFF]);
         }
 
-        public override void Decrypt (Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        public override void Decrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
         {
             for (int i = 0; i < count; ++i)
             {
-                values[pos+i] ^= KeyTable[(offset+i) & 0xFF];
+                values[pos + i] ^= KeyTable[(offset + i) & 0xFF];
             }
         }
 
-        public override void Encrypt (Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        public override void Encrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
         {
-            Decrypt (entry, offset, values, pos, count);
+            Decrypt(entry, offset, values, pos, count);
         }
     }
 
     [Serializable]
     public class NatsupochiCrypt : ICrypt
     {
-        public override byte Decrypt (Xp3Entry entry, long offset, byte value)
+        public override byte Decrypt(Xp3Entry entry, long offset, byte value)
         {
             return (byte)(value ^ (entry.Hash >> 3));
         }
 
-        public override void Decrypt (Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        public override void Decrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
         {
             byte key = (byte)(entry.Hash >> 3);
             for (int i = 0; i < count; ++i)
             {
-                values[pos+i] ^= key;
+                values[pos + i] ^= key;
             }
         }
 
-        public override void Encrypt (Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        public override void Encrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
         {
-            Decrypt (entry, offset, values, pos, count);
+            Decrypt(entry, offset, values, pos, count);
         }
     }
 
     [Serializable]
     public class PoringSoftCrypt : ICrypt
     {
-        public override byte Decrypt (Xp3Entry entry, long offset, byte value)
+        public override byte Decrypt(Xp3Entry entry, long offset, byte value)
         {
             return (byte)~(value ^ (entry.Hash + 1));
         }
 
-        public override void Decrypt (Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        public override void Decrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
         {
             byte key = (byte)~(entry.Hash + 1);
             for (int i = 0; i < count; ++i)
             {
-                values[pos+i] ^= key;
+                values[pos + i] ^= key;
             }
         }
 
-        public override void Encrypt (Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        public override void Encrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
         {
-            Decrypt (entry, offset, values, pos, count);
+            Decrypt(entry, offset, values, pos, count);
         }
     }
 
     [Serializable]
     public class AppliqueCrypt : ICrypt
     {
-        public override byte Decrypt (Xp3Entry entry, long offset, byte value)
+        public override byte Decrypt(Xp3Entry entry, long offset, byte value)
         {
             return offset < 5 ? value : (byte)(value ^ (entry.Hash >> 12));
         }
 
-        public override void Decrypt (Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        public override void Decrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
         {
             if (offset < 5)
             {
-                int skip = Math.Min (5 - (int)offset, count);
+                int skip = Math.Min(5 - (int)offset, count);
                 offset += skip;
                 pos += skip;
                 count -= skip;
@@ -751,13 +754,13 @@ namespace GameRes.Formats.KiriKiri
             byte key = (byte)(entry.Hash >> 12);
             for (int i = 0; i < count; ++i)
             {
-                values[pos+i] ^= key;
+                values[pos + i] ^= key;
             }
         }
 
-        public override void Encrypt (Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        public override void Encrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
         {
-            Decrypt (entry, offset, values, pos, count);
+            Decrypt(entry, offset, values, pos, count);
         }
     }
 
@@ -766,66 +769,66 @@ namespace GameRes.Formats.KiriKiri
     {
         public override bool HashAfterCrypt { get { return true; } }
 
-        public override void Decrypt (Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        public override void Decrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
         {
             uint key;
-            uint limit = GetParameters (entry, out key);
+            uint limit = GetParameters(entry, out key);
             for (int i = 0; i < count && offset < limit; ++i, ++offset)
             {
-                values[pos+i] ^= (byte)(key >> (((int)offset & 3) << 3));
+                values[pos + i] ^= (byte)(key >> (((int)offset & 3) << 3));
             }
         }
 
-        public override void Encrypt (Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        public override void Encrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
         {
-            Decrypt (entry, offset, values, pos, count);
+            Decrypt(entry, offset, values, pos, count);
         }
 
-        uint GetParameters (Xp3Entry entry, out uint key)
+        uint GetParameters(Xp3Entry entry, out uint key)
         {
-            var ext = System.IO.Path.GetExtension (entry.Name);
-            if (!string.IsNullOrEmpty (ext))
+            var ext = System.IO.Path.GetExtension(entry.Name);
+            if (!string.IsNullOrEmpty(ext))
             {
                 ext = ext.ToLowerInvariant();
                 var ext_bin = new byte[16];
-                Encodings.cp932.GetBytes (ext, 0, Math.Min (4, ext.Length), ext_bin, 0);
-                key = ~LittleEndian.ToUInt32 (ext_bin, 0);
-                if (".asd.tjs.ks".Contains (ext))
+                Encodings.cp932.GetBytes(ext, 0, Math.Min(4, ext.Length), ext_bin, 0);
+                key = ~LittleEndian.ToUInt32(ext_bin, 0);
+                if (".asd.tjs.ks".Contains(ext))
                     return entry.UnpackedSize;
             }
             else
                 key = uint.MaxValue;
-            return Math.Min (entry.UnpackedSize, 0x100u);
+            return Math.Min(entry.UnpackedSize, 0x100u);
         }
     }
 
     [Serializable]
     public class SourireCrypt : ICrypt
     {
-        public override byte Decrypt (Xp3Entry entry, long offset, byte value)
+        public override byte Decrypt(Xp3Entry entry, long offset, byte value)
         {
             return (byte)(value ^ entry.Hash ^ 0xCD);
         }
 
-        public override void Decrypt (Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        public override void Decrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
         {
             byte key = (byte)(entry.Hash ^ 0xCD);
             for (int i = 0; i < count; ++i)
             {
-                values[pos+i] ^= key;
+                values[pos + i] ^= key;
             }
         }
 
-        public override void Encrypt (Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        public override void Encrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
         {
-            Decrypt (entry, offset, values, pos, count);
+            Decrypt(entry, offset, values, pos, count);
         }
     }
 
     [Serializable]
     public class HibikiCrypt : ICrypt
     {
-        public override byte Decrypt (Xp3Entry entry, long offset, byte value)
+        public override byte Decrypt(Xp3Entry entry, long offset, byte value)
         {
             if (0 != (offset & 4) || offset <= 0x64)
                 return (byte)(value ^ (entry.Hash >> 5));
@@ -833,22 +836,22 @@ namespace GameRes.Formats.KiriKiri
                 return (byte)(value ^ (entry.Hash >> 8));
         }
 
-        public override void Decrypt (Xp3Entry entry, long offset, byte[] buffer, int pos, int count)
+        public override void Decrypt(Xp3Entry entry, long offset, byte[] buffer, int pos, int count)
         {
             byte key1 = (byte)(entry.Hash >> 5);
             byte key2 = (byte)(entry.Hash >> 8);
             for (int i = 0; i < count; ++i, ++offset)
             {
                 if (0 != (offset & 4) || offset <= 0x64)
-                    buffer[pos+i] ^= key1;
+                    buffer[pos + i] ^= key1;
                 else
-                    buffer[pos+i] ^= key2;
+                    buffer[pos + i] ^= key2;
             }
         }
 
-        public override void Encrypt (Xp3Entry entry, long offset, byte[] buffer, int pos, int count)
+        public override void Encrypt(Xp3Entry entry, long offset, byte[] buffer, int pos, int count)
         {
-            Decrypt (entry, offset, buffer, pos, count);
+            Decrypt(entry, offset, buffer, pos, count);
         }
     }
 
@@ -857,39 +860,39 @@ namespace GameRes.Formats.KiriKiri
     {
         private readonly uint m_seed;
 
-        public AkabeiCrypt (uint seed)
+        public AkabeiCrypt(uint seed)
         {
             m_seed = seed;
         }
 
-        public override string ToString ()
+        public override string ToString()
         {
-            return string.Format ("{0}(0x{1:X08})", base.ToString(), m_seed);
+            return string.Format("{0}(0x{1:X08})", base.ToString(), m_seed);
         }
 
-        public override byte Decrypt (Xp3Entry entry, long offset, byte value)
+        public override byte Decrypt(Xp3Entry entry, long offset, byte value)
         {
             int key_pos = (int)offset & 0x1F;
-            var key = GetKey (entry.Hash).ElementAt (key_pos);
+            var key = GetKey(entry.Hash).ElementAt(key_pos);
             return (byte)(value ^ key);
         }
 
-        public override void Decrypt (Xp3Entry entry, long offset, byte[] buffer, int pos, int count)
+        public override void Decrypt(Xp3Entry entry, long offset, byte[] buffer, int pos, int count)
         {
-            var key = GetKey (entry.Hash).ToArray();
+            var key = GetKey(entry.Hash).ToArray();
             int key_pos = (int)offset;
             for (int i = 0; i < count; ++i)
             {
-                buffer[pos+i] ^= key[key_pos++ & 0x1F];
+                buffer[pos + i] ^= key[key_pos++ & 0x1F];
             }
         }
 
-        public override void Encrypt (Xp3Entry entry, long offset, byte[] buffer, int pos, int count)
+        public override void Encrypt(Xp3Entry entry, long offset, byte[] buffer, int pos, int count)
         {
-            Decrypt (entry, offset, buffer, pos, count);
+            Decrypt(entry, offset, buffer, pos, count);
         }
 
-        internal IEnumerable<byte> GetKey (uint hash)
+        internal IEnumerable<byte> GetKey(uint hash)
         {
             hash = (hash ^ m_seed) & 0x7FFFFFFF;
             hash = hash << 31 | hash;
@@ -934,61 +937,61 @@ namespace GameRes.Formats.KiriKiri
     [Serializable]
     public class HaikuoCrypt : ICrypt
     {
-        public override byte Decrypt (Xp3Entry entry, long offset, byte value)
+        public override byte Decrypt(Xp3Entry entry, long offset, byte value)
         {
             return (byte)(value ^ entry.Hash ^ (entry.Hash >> 8));
         }
 
-        public override void Decrypt (Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        public override void Decrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
         {
             byte key = (byte)(entry.Hash ^ (entry.Hash >> 8));
             for (int i = 0; i < count; ++i)
             {
-                values[pos+i] ^= key;
+                values[pos + i] ^= key;
             }
         }
 
-        public override void Encrypt (Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        public override void Encrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
         {
-            Decrypt (entry, offset, values, pos, count);
+            Decrypt(entry, offset, values, pos, count);
         }
     }
 
     [Serializable]
     public class StripeCrypt : ICrypt
     {
-        readonly byte   m_key;
+        readonly byte m_key;
 
-        public StripeCrypt (byte key)
+        public StripeCrypt(byte key)
         {
             m_key = key;
         }
 
-        public override string ToString ()
+        public override string ToString()
         {
-            return string.Format ("{0}(0x{1:X02})", base.ToString(), m_key);
+            return string.Format("{0}(0x{1:X02})", base.ToString(), m_key);
         }
 
-        public override byte Decrypt (Xp3Entry entry, long offset, byte value)
+        public override byte Decrypt(Xp3Entry entry, long offset, byte value)
         {
             return (byte)((value ^ m_key) + 1);
         }
 
-        public override void Decrypt (Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        public override void Decrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
         {
             for (int i = 0; i < count; ++i)
             {
-                values[pos+i] ^= m_key;
-                values[pos+i] ++;
+                values[pos + i] ^= m_key;
+                values[pos + i]++;
             }
         }
 
-        public override void Encrypt (Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        public override void Encrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
         {
             for (int i = 0; i < count; ++i)
             {
-                values[pos+i] --;
-                values[pos+i] ^= m_key;
+                values[pos + i]--;
+                values[pos + i] ^= m_key;
             }
         }
     }
@@ -996,41 +999,41 @@ namespace GameRes.Formats.KiriKiri
     [Serializable]
     public class ExaCrypt : ICrypt
     {
-        public override byte Decrypt (Xp3Entry entry, long offset, byte value)
+        public override byte Decrypt(Xp3Entry entry, long offset, byte value)
         {
             return (byte)(value ^ (entry.Hash >> (int)((uint)offset % 5)));
         }
 
-        public override void Decrypt (Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        public override void Decrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
         {
             int shift = (int)(offset % 5);
             for (int i = 0; i < count; ++i)
             {
-                values[pos+i] ^= (byte)(entry.Hash >> ((shift+i) % 5));
+                values[pos + i] ^= (byte)(entry.Hash >> ((shift + i) % 5));
             }
         }
 
-        public override void Encrypt (Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        public override void Encrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
         {
-            Decrypt (entry, offset, values, pos, count);
+            Decrypt(entry, offset, values, pos, count);
         }
     }
 
     [Serializable]
     public class SmileCrypt : ICrypt
     {
-        readonly uint   m_key_xor;
-        readonly byte   m_first_xor;
-        readonly byte   m_zero_xor;
+        readonly uint m_key_xor;
+        readonly byte m_first_xor;
+        readonly byte m_zero_xor;
 
-        public SmileCrypt (uint key_xor, byte first_xor, byte zero_xor)
+        public SmileCrypt(uint key_xor, byte first_xor, byte zero_xor)
         {
             m_key_xor = key_xor;
             m_first_xor = first_xor;
             m_zero_xor = zero_xor;
         }
 
-        public override void Decrypt (Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        public override void Decrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
         {
             uint hash = entry.Hash ^ m_key_xor;
             byte key = (byte)(hash ^ (hash >> 8) ^ (hash >> 16) ^ (hash >> 24));
@@ -1044,13 +1047,13 @@ namespace GameRes.Formats.KiriKiri
             }
             for (int i = 0; i < count; ++i)
             {
-                values[pos+i] ^= key;
+                values[pos + i] ^= key;
             }
         }
 
-        public override void Encrypt (Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        public override void Encrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
         {
-            Decrypt (entry, offset, values, pos, count);
+            Decrypt(entry, offset, values, pos, count);
         }
     }
 
@@ -1059,26 +1062,26 @@ namespace GameRes.Formats.KiriKiri
     [Serializable]
     public class YuzuCrypt : ICrypt
     {
-        public override void Decrypt (Xp3Entry entry, long offset, byte[] data, int pos, int count)
+        public override void Decrypt(Xp3Entry entry, long offset, byte[] data, int pos, int count)
         {
             uint hash = entry.Hash ^ 0x1DDB6E7A;
             byte key = (byte)(hash ^ (hash >> 8) ^ (hash >> 16) ^ (hash >> 24));
             if (0 == key)
                 key = 0xD0;
             for (int i = 0; i < count; ++i)
-                data[pos+i] ^= key;
+                data[pos + i] ^= key;
         }
 
-        public override void Encrypt (Xp3Entry entry, long offset, byte[] data, int pos, int count)
+        public override void Encrypt(Xp3Entry entry, long offset, byte[] data, int pos, int count)
         {
-            Decrypt (entry, offset, data, pos, count);
+            Decrypt(entry, offset, data, pos, count);
         }
     }
 
     [Serializable]
     public class HighRunningCrypt : ICrypt
     {
-        public override void Decrypt (Xp3Entry entry, long offset, byte[] data, int pos, int count)
+        public override void Decrypt(Xp3Entry entry, long offset, byte[] data, int pos, int count)
         {
             byte key = (byte)entry.Hash;
             if (0 == key)
@@ -1086,19 +1089,19 @@ namespace GameRes.Formats.KiriKiri
             for (int i = 0; i < count; ++i)
             {
                 if ((offset + i) % key != 0)
-                    data[pos+i] ^= key;
+                    data[pos + i] ^= key;
             }
         }
 
-        public override byte Decrypt (Xp3Entry entry, long offset, byte value)
+        public override byte Decrypt(Xp3Entry entry, long offset, byte value)
         {
             byte key = (byte)entry.Hash;
             return key != 0 && offset % key != 0 ? (byte)(value ^ key) : value;
         }
 
-        public override void Encrypt (Xp3Entry entry, long offset, byte[] data, int pos, int count)
+        public override void Encrypt(Xp3Entry entry, long offset, byte[] data, int pos, int count)
         {
-            Decrypt (entry, offset, data, pos, count);
+            Decrypt(entry, offset, data, pos, count);
         }
     }
 
@@ -1108,15 +1111,15 @@ namespace GameRes.Formats.KiriKiri
         public uint[] HashTable;
         public byte[] KeyTable;
 
-        public override void Decrypt (Xp3Entry entry, long offset, byte[] buffer, int pos, int count)
+        public override void Decrypt(Xp3Entry entry, long offset, byte[] buffer, int pos, int count)
         {
             if (HashTable != null)
             {
-                int i = Array.IndexOf (HashTable, entry.Hash);
+                int i = Array.IndexOf(HashTable, entry.Hash);
                 if (i != -1)
                 {
                     for (int j = 0; j < count; ++j)
-                        buffer[pos+j] ^= KeyTable[i];
+                        buffer[pos + j] ^= KeyTable[i];
                     return;
                 }
             }
@@ -1128,7 +1131,7 @@ namespace GameRes.Formats.KiriKiri
                     hash |= 0x80000000;
                 else
                     hash &= 0x7FFFFFFF;
-                LittleEndian.Pack (hash, hash_table, k);
+                LittleEndian.Pack(hash, hash_table, k);
                 hash >>= 1;
             }
             var key_table = new byte[0x400];
@@ -1138,12 +1141,12 @@ namespace GameRes.Formats.KiriKiri
                     key_table[32 * l + m] = (byte)(~hash_table[l] ^ hash_table[m]);
             }
             for (int n = 0; n < count; ++n)
-                buffer[pos+n] ^= key_table[(offset + n) & 0x3FF];
+                buffer[pos + n] ^= key_table[(offset + n) & 0x3FF];
         }
 
-        public override void Encrypt (Xp3Entry entry, long offset, byte[] buffer, int pos, int count)
+        public override void Encrypt(Xp3Entry entry, long offset, byte[] buffer, int pos, int count)
         {
-            Decrypt (entry, offset, buffer, pos, count);
+            Decrypt(entry, offset, buffer, pos, count);
         }
     }
 
@@ -1152,77 +1155,78 @@ namespace GameRes.Formats.KiriKiri
     {
         public string FileListName { get; set; }
 
-        public override void Decrypt (Xp3Entry entry, long offset, byte[] buffer, int pos, int count)
+        public override void Decrypt(Xp3Entry entry, long offset, byte[] buffer, int pos, int count)
         {
             var key = new byte[12];
-            LittleEndian.Pack (entry.Hash, key, 0);
-            LittleEndian.Pack (0x6E1DA9B2u, key, 4);
-            LittleEndian.Pack (0x0040C800u, key, 8);
+            LittleEndian.Pack(entry.Hash, key, 0);
+            LittleEndian.Pack(0x6E1DA9B2u, key, 4);
+            LittleEndian.Pack(0x0040C800u, key, 8);
             int k = (int)(offset % 12);
             for (int i = 0; i < count; ++i)
             {
-                buffer[pos+i] ^= key[k++];
+                buffer[pos + i] ^= key[k++];
                 if (12 == k)
                     k = 0;
             }
         }
 
-        public override void Encrypt (Xp3Entry entry, long offset, byte[] buffer, int pos, int count)
+        public override void Encrypt(Xp3Entry entry, long offset, byte[] buffer, int pos, int count)
         {
-            Decrypt (entry, offset, buffer, pos, count);
+            Decrypt(entry, offset, buffer, pos, count);
         }
 
-        public override string ReadName (BinaryReader header)
+        public override string ReadName(BinaryReader header)
         {
             if (null == KnownNames)
                 ReadNames();
             uint key = header.ReadUInt32();
             uint name_hash = header.ReadUInt32() ^ key;
             string name;
-            if (KnownNames.TryGetValue (name_hash, out name))
+            if (KnownNames.TryGetValue(name_hash, out name))
                 return name;
             uint ext_hash = header.ReadUInt32() ^ key;
-            name = name_hash.ToString ("X8");
+            name = name_hash.ToString("X8");
             switch (ext_hash)
             {
-            case 0x01854675: name += ".png"; break; // GetNameHash (".png")
-            case 0x03D435DE: name += ".map"; break; // GetNameHash (".map")
-            case 0x2D1F13E0: name += ".asd"; break; // GetNameHash (".asd")
-            case 0x482F4319: name += ".tjs"; break; // GetNameHash (".tjs")
-            case 0x58924012: name += ".txt"; break; // GetNameHash (".txt")
-            case 0xB01C48CA: name += ".ks";  break; // GetNameHash (".ks")
-            case 0xC0F7DFB2: name += ".wav"; break; // GetNameHash (".wav")
-            case 0xE3A31D19: name += ".jpg"; break; // GetNameHash (".jpg")
-            case 0xE7F3FEEB: name += ".ogg"; break; // GetNameHash (".ogg")
-            default: name += ext_hash.ToString ("X8"); break;
+                case 0x01854675: name += ".png"; break; // GetNameHash (".png")
+                case 0x03D435DE: name += ".map"; break; // GetNameHash (".map")
+                case 0x2D1F13E0: name += ".asd"; break; // GetNameHash (".asd")
+                case 0x482F4319: name += ".tjs"; break; // GetNameHash (".tjs")
+                case 0x58924012: name += ".txt"; break; // GetNameHash (".txt")
+                case 0xB01C48CA: name += ".ks"; break; // GetNameHash (".ks")
+                case 0xC0F7DFB2: name += ".wav"; break; // GetNameHash (".wav")
+                case 0xE3A31D19: name += ".jpg"; break; // GetNameHash (".jpg")
+                case 0xE7F3FEEB: name += ".ogg"; break; // GetNameHash (".ogg")
+                default: name += ext_hash.ToString("X8"); break;
             }
             return name;
         }
 
-        static uint GetNameHash (string name)
+        static uint GetNameHash(string name)
         {
             uint hash = 0;
             for (int i = 0; i < name.Length; ++i)
             {
-                int c = char.ToLowerInvariant (name[i]);
+                int c = char.ToLowerInvariant(name[i]);
                 hash = 0x1000193u * hash ^ (byte)c;
                 hash = 0x1000193u * hash ^ (byte)(c >> 8);
             }
             return hash;
         }
 
-        void ReadNames ()
+        void ReadNames()
         {
             var names = new Dictionary<uint, string>();
             try
             {
-                FormatCatalog.Instance.ReadFileList (FileListName, name => {
-                    names[GetNameHash (name)] = name;
+                FormatCatalog.Instance.ReadFileList(FileListName, name =>
+                {
+                    names[GetNameHash(name)] = name;
                 });
             }
             catch (Exception X)
             {
-                System.Diagnostics.Trace.WriteLine (X.Message, "[RhapsodyCrypt]");
+                System.Diagnostics.Trace.WriteLine(X.Message, "[RhapsodyCrypt]");
             }
             KnownNames = names;
         }
@@ -1231,49 +1235,49 @@ namespace GameRes.Formats.KiriKiri
         Dictionary<uint, string> KnownNames = null;
     }
 
-     [Serializable]
+    [Serializable]
     public class SmxCrypt : ICrypt
     {
-        readonly int    Mask;
+        readonly int Mask;
         readonly byte[] KeySeq;
 
-        public SmxCrypt (int mask, byte[] key_seq)
+        public SmxCrypt(int mask, byte[] key_seq)
         {
-            if (key_seq.Length <= mask+1)
-                throw new ArgumentException ("Not enough arguments for SmxCrypt.");
+            if (key_seq.Length <= mask + 1)
+                throw new ArgumentException("Not enough arguments for SmxCrypt.");
             KeySeq = key_seq;
             Mask = mask;
         }
 
-        public SmxCrypt (params byte[] key_seq) : this (5, key_seq)
+        public SmxCrypt(params byte[] key_seq) : this(5, key_seq)
         {
         }
 
-        public override void Decrypt (Xp3Entry entry, long offset, byte[] buffer, int pos, int count)
+        public override void Decrypt(Xp3Entry entry, long offset, byte[] buffer, int pos, int count)
         {
             byte start_key = (byte)(entry.Hash >> KeySeq[0]);
-            var key = GenerateKey (entry.Hash);
+            var key = GenerateKey(entry.Hash);
             for (int i = 0; i < count; ++i)
             {
                 if ((offset + i) <= 100)
-                    buffer[pos+i] ^= start_key;
+                    buffer[pos + i] ^= start_key;
                 else
-                    buffer[pos+i] ^= key[(int)(offset + i) & Mask];
+                    buffer[pos + i] ^= key[(int)(offset + i) & Mask];
             }
         }
 
-        public override void Encrypt (Xp3Entry entry, long offset, byte[] buffer, int pos, int count)
+        public override void Encrypt(Xp3Entry entry, long offset, byte[] buffer, int pos, int count)
         {
-            Decrypt (entry, offset, buffer, pos, count);
+            Decrypt(entry, offset, buffer, pos, count);
         }
 
-        public override string ToString ()
+        public override string ToString()
         {
-            var key_seq = KeySeq != null ? string.Join (",", KeySeq.Select (x => x.ToString ("D"))) : "null";
-            return string.Format ("{0}({1})", base.ToString(), key_seq);
+            var key_seq = KeySeq != null ? string.Join(",", KeySeq.Select(x => x.ToString("D"))) : "null";
+            return string.Format("{0}({1})", base.ToString(), key_seq);
         }
 
-        protected byte[] GenerateKey (uint hash)
+        protected byte[] GenerateKey(uint hash)
         {
             var key = new byte[KeySeq.Length - 1];
             for (int i = 1; i < KeySeq.Length; ++i)
@@ -1285,59 +1289,59 @@ namespace GameRes.Formats.KiriKiri
     [Serializable]
     public class FestivalCrypt : ICrypt
     {
-        public override byte Decrypt (Xp3Entry entry, long offset, byte value)
+        public override byte Decrypt(Xp3Entry entry, long offset, byte value)
         {
             return (byte)(value ^ (entry.Hash >> 7) ^ 0xFF);
         }
 
-        public override void Decrypt (Xp3Entry entry, long offset, byte[] data, int pos, int count)
+        public override void Decrypt(Xp3Entry entry, long offset, byte[] data, int pos, int count)
         {
             byte key = (byte)~(entry.Hash >> 7);
             for (int i = 0; i < count; ++i)
             {
-                data[pos+i] ^= key;
+                data[pos + i] ^= key;
             }
         }
 
-        public override void Encrypt (Xp3Entry entry, long offset, byte[] data, int pos, int count)
+        public override void Encrypt(Xp3Entry entry, long offset, byte[] data, int pos, int count)
         {
-            Decrypt (entry, offset, data, pos, count);
+            Decrypt(entry, offset, data, pos, count);
         }
     }
 
     [Serializable]
     public class PinPointCrypt : ICrypt
     {
-        public override void Decrypt (Xp3Entry entry, long offset, byte[] data, int pos, int count)
+        public override void Decrypt(Xp3Entry entry, long offset, byte[] data, int pos, int count)
         {
             for (int i = 0; i < count; ++i)
             {
-                byte val = data[pos+i];
-                int bit_count = CountSetBits (val);
+                byte val = data[pos + i];
+                int bit_count = CountSetBits(val);
                 if (bit_count > 0)
                 {
-                    val = Binary.RotByteL (val, bit_count);
-                    data[pos+i] = val;
+                    val = Binary.RotByteL(val, bit_count);
+                    data[pos + i] = val;
                 }
             }
         }
 
-        public override void Encrypt (Xp3Entry entry, long offset, byte[] data, int pos, int count)
+        public override void Encrypt(Xp3Entry entry, long offset, byte[] data, int pos, int count)
         {
             for (int i = 0; i < count; ++i)
             {
-                byte val = data[pos+i];
-                int bit_count = CountSetBits (val);
+                byte val = data[pos + i];
+                int bit_count = CountSetBits(val);
                 if (bit_count > 0)
                 {
-                    val = Binary.RotByteR (val, bit_count);
-                    data[pos+i] = val;
+                    val = Binary.RotByteR(val, bit_count);
+                    data[pos + i] = val;
                 }
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static int CountSetBits (byte x)
+        static int CountSetBits(byte x)
         {
             int bit_count = (x & 0x55) + ((x >> 1) & 0x55);
             bit_count = (bit_count & 0x33) + ((bit_count >> 2) & 0x33);
@@ -1348,51 +1352,51 @@ namespace GameRes.Formats.KiriKiri
     [Serializable]
     public class HybridCrypt : ICrypt
     {
-        public override byte Decrypt (Xp3Entry entry, long offset, byte value)
+        public override byte Decrypt(Xp3Entry entry, long offset, byte value)
         {
             return (byte)(value ^ (entry.Hash >> 5));
         }
 
-        public override void Decrypt (Xp3Entry entry, long offset, byte[] buffer, int pos, int count)
+        public override void Decrypt(Xp3Entry entry, long offset, byte[] buffer, int pos, int count)
         {
             byte key = (byte)(entry.Hash >> 5);
             for (int i = 0; i < count; ++i, ++offset)
             {
-                buffer[pos+i] ^= key;
+                buffer[pos + i] ^= key;
             }
         }
 
-        public override void Encrypt (Xp3Entry entry, long offset, byte[] buffer, int pos, int count)
+        public override void Encrypt(Xp3Entry entry, long offset, byte[] buffer, int pos, int count)
         {
-            Decrypt (entry, offset, buffer, pos, count);
+            Decrypt(entry, offset, buffer, pos, count);
         }
     }
 
     [Serializable]
     public class NekoWorksCrypt : ICrypt
     {
-        byte[]  DefaultKey;
+        byte[] DefaultKey;
 
-        public NekoWorksCrypt (byte[] key)
+        public NekoWorksCrypt(byte[] key)
         {
             DefaultKey = key;
         }
 
-        public override void Decrypt (Xp3Entry entry, long offset, byte[] buffer, int pos, int count)
+        public override void Decrypt(Xp3Entry entry, long offset, byte[] buffer, int pos, int count)
         {
-            var key = InitKey (entry.Hash);
+            var key = InitKey(entry.Hash);
             for (int i = 0; i < count; ++i)
             {
-                buffer[pos+i] ^= key[(offset + i) % 31];
+                buffer[pos + i] ^= key[(offset + i) % 31];
             }
         }
 
-        public override void Encrypt (Xp3Entry entry, long offset, byte[] buffer, int pos, int count)
+        public override void Encrypt(Xp3Entry entry, long offset, byte[] buffer, int pos, int count)
         {
-            Decrypt (entry, offset, buffer, pos, count);
+            Decrypt(entry, offset, buffer, pos, count);
         }
 
-        byte[] InitKey (uint hash)
+        byte[] InitKey(uint hash)
         {
             hash &= 0x7FFFFFFF;
             hash = hash << 31 | hash;
@@ -1496,7 +1500,7 @@ namespace GameRes.Formats.KiriKiri
     [Serializable]
     public class SyangrilaSmartCrypt : ICrypt
     {
-        byte[] GetKey (uint hash)
+        byte[] GetKey(uint hash)
         {
             return new byte[5]
             {
@@ -1508,66 +1512,66 @@ namespace GameRes.Formats.KiriKiri
             };
         }
 
-        public override byte Decrypt (Xp3Entry entry, long offset, byte value)
+        public override byte Decrypt(Xp3Entry entry, long offset, byte value)
         {
-            var key = GetKey (entry.Hash);
+            var key = GetKey(entry.Hash);
             if (offset <= 0x64)
                 return (byte)(value ^ key[4]);
             else
                 return (byte)(value ^ key[offset & 3]);
         }
 
-        public override void Decrypt (Xp3Entry entry, long offset, byte[] buffer, int pos, int count)
+        public override void Decrypt(Xp3Entry entry, long offset, byte[] buffer, int pos, int count)
         {
-            var key = GetKey (entry.Hash);
+            var key = GetKey(entry.Hash);
             for (var i = 0; i < count; i++)
             {
-                if (offset+i <= 0x64)
-                    buffer[pos+i] ^= key[4];
+                if (offset + i <= 0x64)
+                    buffer[pos + i] ^= key[4];
                 else
-                    buffer[pos+i] ^= key[(offset+i) & 3];
+                    buffer[pos + i] ^= key[(offset + i) & 3];
             }
         }
 
-        public override void Encrypt (Xp3Entry entry, long offset, byte[] buffer, int pos, int count)
+        public override void Encrypt(Xp3Entry entry, long offset, byte[] buffer, int pos, int count)
         {
-            Decrypt (entry, offset, buffer, pos, count);
+            Decrypt(entry, offset, buffer, pos, count);
         }
     }
 
     [Serializable]
     public class GensouCrypt : ICrypt
     {
-        byte[]  Key1;
-        uint[]  Key2;
+        byte[] Key1;
+        uint[] Key2;
 
-        public GensouCrypt (byte[] key1, uint[] key2)
+        public GensouCrypt(byte[] key1, uint[] key2)
         {
             Key1 = key1;
             Key2 = key2;
             StartupTjsNotEncrypted = true;
         }
 
-        public override void Decrypt (Xp3Entry entry, long offset, byte[] buffer, int pos, int count)
+        public override void Decrypt(Xp3Entry entry, long offset, byte[] buffer, int pos, int count)
         {
             ushort off16 = (ushort)offset;
             for (int i = 0; i < count; ++i)
             {
-                buffer[pos+i] ^= (byte)(Key1[(Key2[off16 >> 3] >> ((off16 & 7) << 2)) & 0xF]
+                buffer[pos + i] ^= (byte)(Key1[(Key2[off16 >> 3] >> ((off16 & 7) << 2)) & 0xF]
                                         ^ ((Key2[off16 >> 3] ^ entry.Hash) >> ((off16 & 3) << 3)));
                 off16++;
             }
         }
 
-        public override void Encrypt (Xp3Entry entry, long offset, byte[] buffer, int pos, int count)
+        public override void Encrypt(Xp3Entry entry, long offset, byte[] buffer, int pos, int count)
         {
-            Decrypt (entry, offset, buffer, pos, count);
+            Decrypt(entry, offset, buffer, pos, count);
         }
 
-        public override void Init (ArcFile arc)
+        public override void Init(ArcFile arc)
         {
-            foreach (Xp3Entry entry in arc.Dir.Where (e => VFS.IsPathEqualsToFileName (e.Name, "btext.dll")
-                                                        || VFS.IsPathEqualsToFileName (e.Name, "initialize.tjs")))
+            foreach (Xp3Entry entry in arc.Dir.Where(e => VFS.IsPathEqualsToFileName(e.Name, "btext.dll")
+                                                        || VFS.IsPathEqualsToFileName(e.Name, "initialize.tjs")))
             {
                 entry.Cipher = Xp3Opener.NoCryptAlgorithm;
             }
@@ -1634,4 +1638,79 @@ namespace GameRes.Formats.KiriKiri
         }
     }
 
+    //èëÇ´Ç©ÇØñ¢äÆê¨
+    [Serializable]
+    public class HitorenCrypt : ICrypt
+    {
+        string prev_name = "";
+        public override void Decrypt(Xp3Entry entry, long offset, byte[] buffer, int pos, int count)
+        {
+            byte raw = buffer[pos];
+            int diff;
+
+            int shift;
+            int[] param = new int[4] {
+                0x18,
+                0,
+                0,
+                0
+            };
+
+            for (int i = 0; i < count; i++)
+            {
+                shift = (i & 3) * 8;
+                buffer[pos + i] -= (byte)(0xf53a7ac2 >> shift);
+                buffer[pos + i] ^= (byte)((entry.Hash ^ 0xf6d2b397) >> shift);
+                buffer[pos + i] += (byte)(0xdc98dacb >> shift);
+                buffer[pos + i] ^= (byte)param[i & 3];
+            }
+            if (prev_name != entry.Name)
+            {
+                diff = raw - 0xC2;
+                Console.WriteLine("0x{0:X} ÅÀ 0x{1:X} : diff {2:X}", raw, buffer[pos], diff);
+                prev_name = entry.Name;
+            }
+
+            /*int uVar2 = 0;
+            if (count != 0)
+            {
+                do
+                {
+                    shift = (uVar2 & 3) * 8;
+                    fixed (byte* ptr = &buffer[pos])
+                    {
+                        *(ptr + uVar2) = (byte)(*(ptr + uVar2) - (byte)(0xf53a7ac2 >> shift));
+                        *(ptr + uVar2) = (byte)(*(ptr + uVar2) ^ (byte)((entry.Hash ^ 0xf6d2b397) >> shift));
+                        *(ptr + uVar2) = (byte)(*(ptr + uVar2) + (byte)(0xdc98dacb >> shift));
+                        *(ptr + uVar2) = (byte)(*(ptr + uVar2) ^ (byte)param[uVar2 & 3]);
+                    }
+                    uVar2 = uVar2 + 1;
+                } while (uVar2 < count);
+            }*/
+        }
+
+        public override void Encrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    [Serializable]
+    public class HoneyCombCrypt : ICrypt
+    {
+        public override void Decrypt(Xp3Entry entry, long offset, byte[] buffer, int pos, int count)
+        {
+            uint seed = entry.Hash ^ 0xABCD9876;
+            byte key = (byte)((seed >> 24) ^ (seed >> 16) ^ (seed >> 8) ^ seed);
+            if (key == 0)
+                key = 0xA5;
+            for (int i = 0; i < count; ++i)
+                buffer[pos + i] ^= key;
+        }
+
+        public override void Encrypt(Xp3Entry entry, long offset, byte[] values, int pos, int count)
+        {
+            Decrypt(entry, offset, values, pos, count);
+        }
+    }
 }

@@ -41,6 +41,7 @@ using GameRes.Formats.GUI;
 using GameRes.Formats.Strings;
 using GameRes.Utility;
 using GARbro.GUI;
+using GameRes.Formats.Misc;
 
 namespace GameRes.Formats.KiriKiri
 {
@@ -733,8 +734,7 @@ namespace GameRes.Formats.KiriKiri
 
             return options.Scheme;
 
-            /*return new HitorenCrypt();*/
-
+            //return new HitorenCrypt();
         }
 
         public static ICrypt GetScheme(string scheme)
