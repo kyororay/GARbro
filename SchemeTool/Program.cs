@@ -63,8 +63,7 @@ namespace SchemeTool
                     {
                         //foreach (var i in gameMap)
                         //Console.WriteLine("{0} : {1}", i.Key, i.Value);
-                        gameMap["tonakoi_fd.exe"] = "キミのとなりで恋してる！ ～THE RESPECTIVE HAPPINESS～";
-                        gameMap["kanesen.exe"] = "茜色の境界線";
+                        gameMap["HOTEL.exe"] = "HOTEL.";
                     }
                 }
                 else if (mode == 2)
@@ -101,11 +100,7 @@ namespace SchemeTool
                         }
                     }*/
 
-                    scheme.KnownSchemes["サツコイ ～悠久なる恋の歌～"] = new HoneyCombCrypt();
-                    scheme.KnownSchemes["キミのとなりで恋してる！"] = new HoneyCombCrypt();
-                    scheme.KnownSchemes["キミのとなりで恋してる！ ～THE RESPECTIVE HAPPINESS～"] = new SmileCrypt(0xABCD9876, 0x76, 0xA5);
-                    scheme.KnownSchemes["茜色の境界線"] = new SmileCrypt(0xABCD9876, 0x76, 0xA5);
-
+                    scheme.KnownSchemes["HOTEL."] = new SmxCrypt(7, new byte[] { 1, 4, 4, 4, 4, 2, 2, 2, 2 });
 
                     //scheme.KnownSchemes.Remove("Surechigau Kyoudai no Kowareru Rinrikan");
                     //scheme.NoCryptTitles.Add("野良猫少女との生活 CAT Girl Sweet Days");
