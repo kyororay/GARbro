@@ -220,23 +220,24 @@ namespace GameRes.Formats.NeXAS
         {
             using (var decoder = base.OpenImage(arc, entry))
             {
-                var image = decoder.Image;
-
-                if (Path.GetExtension(entry.Name) == ".bmp")
-                {
-                    image.MakeTransparent( //黒色部分の透明化
-                        System.Drawing.Color.FromArgb(0, 0, 0),
-                        System.Drawing.Imaging.PixelFormat.Format32bppPArgb
-                        );
-                }
-
-                var source = image.Bitmap;
+                ImageData image;
+                BitmapSource source = null;
 
                 try
                 {
                     SetParams(arc, entry);
                     if (m_metadata_dict.ContainsKey(entry.Name))
                     {
+                        image = decoder.Image;
+                        if (Path.GetExtension(entry.Name) == ".bmp")
+                        {
+                            image.MakeTransparent( //黒色部分の透明化
+                                System.Drawing.Color.FromArgb(0, 0, 0),
+                                System.Drawing.Imaging.PixelFormat.Format32bppPArgb
+                                );
+                        }
+
+                        source = image.Bitmap;
                         var info = m_metadata_dict[entry.Name];
                         if (info.Width == 0xFFFFFFFF || info.Height == 0xFFFFFFFF) //キスベルの個別対応
                         {
@@ -252,7 +253,7 @@ namespace GameRes.Formats.NeXAS
                         Entry base_entry = null;
                         if (!string.IsNullOrEmpty(info.Base))
                         {
-                            var base_name = System.IO.Path.GetDirectoryName(entry.Name) + info.Base;
+                            var base_name = Path.GetDirectoryName(entry.Name) + info.Base;
                             base_entry = arc.Dir.FirstOrDefault(e => e.Name.ToLower() == base_name.ToLower());
                             if (base_entry != null)
                             {
@@ -294,6 +295,10 @@ namespace GameRes.Formats.NeXAS
                             base_pixels,
                             stride
                             );
+                    }
+                    else
+                    {
+                        source = decoder.Image.Bitmap;
                     }
                 }
                 catch (Exception e)
