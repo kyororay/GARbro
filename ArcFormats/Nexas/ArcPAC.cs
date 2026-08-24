@@ -91,6 +91,7 @@ namespace GameRes.Formats.NeXAS
             //メタデータの初期化
             m_get_flag = false;
             m_metadata_dict.Clear();
+            m_dat_type = 0x00;
 
             return new PacArchive(file, this, dir, reader.PackType);
         }
@@ -239,10 +240,17 @@ namespace GameRes.Formats.NeXAS
 
                         source = image.Bitmap;
                         var info = m_metadata_dict[entry.Name];
-                        if (info.Width == 0xFFFFFFFF || info.Height == 0xFFFFFFFF) //キスベルの個別対応
+                        if (
+                            (m_dat_type == 0x0E && (info.Width == 0xFFFFFFFF || info.Height == 0xFFFFFFFF)) ||
+                            m_dat_type == 0x0C
+                            )
                         {
-                            info.Width = 1280;
-                            info.Height = 720;
+                            var black_entry = arc.Dir.FirstOrDefault(e => e.Name.ToLower() == "visual_black.bmp");
+                            using (var input = arc.OpenImage(black_entry))
+                            {
+                                info.Width = input.Info.Width;
+                                info.Height = input.Info.Height;
+                            }
                         }
 
                         int byte_depth = info.BPP / 8;
@@ -314,11 +322,12 @@ namespace GameRes.Formats.NeXAS
 
         internal static Dictionary<string, PacMetaData> m_metadata_dict = new Dictionary<string, PacMetaData>(StringComparer.OrdinalIgnoreCase);
         internal static bool m_get_flag = false;
+        internal static byte m_dat_type = 0x00;
 
         private void SetParams(ArcFile arc, Entry entry)
         {
-            var name = System.IO.Path.GetFileName(entry.Name);
-            var arc_name = System.IO.Path.GetFileName(arc.File.Name).ToLower();
+            var name = Path.GetFileName(entry.Name);
+            var arc_name = Path.GetFileName(arc.File.Name).ToLower();
 
             if (!m_get_flag)
             {
@@ -328,7 +337,7 @@ namespace GameRes.Formats.NeXAS
 
                 if (arc_name == "visual.pac" || arc_name == "append.pac")
                 {
-                    var pac_dir = System.IO.Path.GetDirectoryName(arc.File.Name);
+                    var pac_dir = Path.GetDirectoryName(arc.File.Name);
                     VFS.FullPath = new string[] { pac_dir };
                     pac_arc = ArcFile.TryOpen(pac_dir + "\\Config.pac");
                     dat_entry = pac_arc.Dir.FirstOrDefault(e => e.Name.ToLower() == "visual.dat");
@@ -354,7 +363,7 @@ namespace GameRes.Formats.NeXAS
                 if (arc_name == "Visual.pac")
                     pac_arc.Dispose(); //visual.datのデータ取得したらConfig.pacはメモリ開放
 
-                byte dat_type = data.First();
+                m_dat_type = data.First();
                 var span = data.AsSpan();
 
                 //先頭インデックスのリスト作成
@@ -372,7 +381,7 @@ namespace GameRes.Formats.NeXAS
                 //データ取得
                 string base_name = "";
                 string tag;
-                if (dat_type == 0x0E)
+                if (m_dat_type == 0x0E)
                 {
                     for (int i = 0; i < index_list.Count - 1; ++i)
                     {
@@ -400,7 +409,7 @@ namespace GameRes.Formats.NeXAS
                     }
                     m_get_flag = true;
                 }
-                else if (dat_type == 0x0C)
+                else if (m_dat_type == 0x0C)
                 {
                     for (int i = 0; i < index_list.Count - 1; ++i)
                     {
@@ -418,8 +427,6 @@ namespace GameRes.Formats.NeXAS
 
                         m_metadata_dict[tag] = new PacMetaData
                         {
-                            Width = 1280,
-                            Height = 720,
                             OffsetX = BitConverter.ToInt32(span.Slice(end - 8, 4).ToArray(), 0),
                             OffsetY = BitConverter.ToInt32(span.Slice(end - 4, 4).ToArray(), 0),
                             BPP = 32,
