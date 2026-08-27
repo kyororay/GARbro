@@ -77,6 +77,11 @@ namespace GameRes.Formats.DxLib
                 data[offset+i] += Key[(offset+i) % Key.Length];
             }
         }
+
+        public string GetKeyword ()
+        {
+            return Encodings.cp932.GetString (Key);
+        }
     }
 
     [Serializable]
@@ -185,7 +190,7 @@ namespace GameRes.Formats.DxLib
             return new BinMemoryStream (data, entry.Name);
         }
 
-        public override IImageDecoder OpenImage(ArcFile arc, Entry entry)
+        /*public override IImageDecoder OpenImage(ArcFile arc, Entry entry)
         {
             using (var decoder = base.OpenImage(arc, entry))
             {
@@ -244,7 +249,7 @@ namespace GameRes.Formats.DxLib
 
                 return new BitmapSourceDecoder(source);
             }
-        }
+        }*/
 
         internal static Dictionary<string, MedMetaData> m_metadata_dict = new Dictionary<string, MedMetaData>(StringComparer.OrdinalIgnoreCase);
         internal static bool m_get_flag = false;
