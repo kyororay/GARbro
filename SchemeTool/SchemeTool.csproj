@@ -80,7 +80,7 @@
     </PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>
-    </PostBuildEvent>
+    <PostBuildEvent>$(SolutionDir)bin\Debug\SchemeTool.exe
+$(SolutionDir)bin\Debug\GARbro.GUI.exe</PostBuildEvent>
   </PropertyGroup>
 </Project>
