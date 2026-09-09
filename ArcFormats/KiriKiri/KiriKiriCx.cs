@@ -140,8 +140,8 @@ namespace GameRes.Formats.KiriKiri
                         }
 
                         //ControlBlock確認用
-                        foreach (var block in ControlBlock)
-                            Console.WriteLine("0x{0:X8}", block);
+                        //foreach (var block in ControlBlock)
+                        //    Console.WriteLine("0x{0:X8}", block);
 
                         return;
                     }
@@ -168,8 +168,8 @@ namespace GameRes.Formats.KiriKiri
                                             ControlBlock[i] = ~src[i];
 
                                         //ControlBlock確認用
-                                        foreach (var block in ControlBlock)
-                                            Console.WriteLine("0x{0:X8}", block);
+                                        //foreach (var block in ControlBlock)
+                                        //    Console.WriteLine("0x{0:X8}", block);
 
                                         return;
                                     }
@@ -193,7 +193,7 @@ namespace GameRes.Formats.KiriKiri
 
         public override byte Decrypt (Xp3Entry entry, long offset, byte value)
         {
-            Console.WriteLine(entry.Name);
+            //Console.WriteLine(entry.Name);
             uint key = entry.Hash;
             uint base_offset = GetBaseOffset (key);
             if (offset >= base_offset)
@@ -207,7 +207,7 @@ namespace GameRes.Formats.KiriKiri
 
         public override void Decrypt (Xp3Entry entry, long offset, byte[] buffer, int pos, int count)
         {
-            Console.WriteLine(entry.Name);
+            //Console.WriteLine(entry.Name);
             uint key = entry.Hash;
             uint base_offset = GetBaseOffset (key);
             if (offset < base_offset)
@@ -266,13 +266,13 @@ namespace GameRes.Formats.KiriKiri
 
         CxProgram GenerateProgram(uint seed)
         {
-            Console.WriteLine("seed:{0}", seed);
+            //Console.WriteLine("seed:{0}", seed);
             var program = NewProgram(seed);
             for (int stage = 5; stage > 0; --stage)
             {
                 m_order_text = "";
                 var rc = EmitCode(program, stage);
-                Console.WriteLine("{0}: {1}", stage, m_order_text);
+                //Console.WriteLine("{0}: {1}", stage, m_order_text);
                 if (rc)
                     return program;
                 program.Clear();
