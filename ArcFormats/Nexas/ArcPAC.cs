@@ -226,7 +226,11 @@ namespace GameRes.Formats.NeXAS
 
                 try
                 {
-                    SetParams(arc, entry);
+                    if (!m_get_flag)
+                    {
+                        SetParams(arc, entry);
+                        VFS.FullPath = new string[] { arc.File.Name, "" };
+                    }
                     if (m_metadata_dict.ContainsKey(entry.Name))
                     {
                         image = decoder.Image;
@@ -329,115 +333,113 @@ namespace GameRes.Formats.NeXAS
             var name = Path.GetFileName(entry.Name);
             var arc_name = Path.GetFileName(arc.File.Name).ToLower();
 
-            if (!m_get_flag)
+            ArcFile pac_arc;
+            Entry dat_entry;
+
+            if (arc_name == "visual.pac" || arc_name == "append.pac")
             {
-                ArcFile pac_arc;
-                Entry dat_entry;
-
-
-                if (arc_name == "visual.pac" || arc_name == "append.pac")
-                {
-                    var pac_dir = Path.GetDirectoryName(arc.File.Name);
-                    VFS.FullPath = new string[] { pac_dir };
-                    pac_arc = ArcFile.TryOpen(pac_dir + "\\Config.pac");
-                    dat_entry = pac_arc.Dir.FirstOrDefault(e => e.Name.ToLower() == "visual.dat");
-                }
-                else if (arc_name == "update.pac") //アペンドアーカイブ
-                {
-                    pac_arc = arc;
-                    dat_entry = pac_arc.Dir.FirstOrDefault(e => e.Name == "visual.dat");
-                    if (dat_entry == null)
-                        return;
-                }
-                else
+                var pac_dir = Path.GetDirectoryName(arc.File.Name);
+                VFS.FullPath = new string[] { pac_dir };
+                if (!VFS.FileExists(pac_dir + "\\Config.pac"))
                     return;
+                pac_arc = ArcFile.TryOpen(pac_dir + "\\Config.pac");
+                dat_entry = pac_arc.Dir.FirstOrDefault(e => e.Name.ToLower() == "visual.dat");
+                if (dat_entry == null)
+                    return;
+            }
+            else if (arc_name == "update.pac") //アペンドアーカイブ
+            {
+                pac_arc = arc;
+                dat_entry = pac_arc.Dir.FirstOrDefault(e => e.Name == "visual.dat");
+                if (dat_entry == null)
+                    return;
+            }
+            else
+                return;
 
-                byte[] data;
-                using (var input = pac_arc.OpenEntry(dat_entry))
-                using (var ms = new MemoryStream())
+            byte[] data;
+            using (var input = pac_arc.OpenEntry(dat_entry))
+            using (var ms = new MemoryStream())
+            {
+                input.CopyTo(ms);
+                data = ms.ToArray();
+            }
+
+            if (arc_name == "Visual.pac")
+                pac_arc.Dispose(); //visual.datのデータ取得したらConfig.pacはメモリ開放
+
+            m_dat_type = data.First();
+            var span = data.AsSpan();
+
+            //先頭インデックスのリスト作成
+            var index_list = new List<int>();
+            for (int i = 0; i <= data.Length - 12; ++i)
+            {
+                if (BitConverter.ToString(span.Slice(i, 12).ToArray()).Replace("-", "") == "FF000000FF000000FF000000") //フレームの先頭を検索
                 {
-                    input.CopyTo(ms);
-                    data = ms.ToArray();
-                }
-
-                if (arc_name == "Visual.pac")
-                    pac_arc.Dispose(); //visual.datのデータ取得したらConfig.pacはメモリ開放
-
-                m_dat_type = data.First();
-                var span = data.AsSpan();
-
-                //先頭インデックスのリスト作成
-                var index_list = new List<int>();
-                for (int i = 0; i <= data.Length - 12; ++i)
-                {
-                    if (BitConverter.ToString(span.Slice(i, 12).ToArray()).Replace("-", "") == "FF000000FF000000FF000000") //フレームの先頭を検索
-                    {
-                        index_list.Add(i);
-                        i += 50; //1フレームは最低51バイト
-                    }
-                }
-                index_list.Add(data.Length);
-
-                //データ取得
-                string base_name = "";
-                string tag;
-                if (m_dat_type == 0x0E)
-                {
-                    for (int i = 0; i < index_list.Count - 1; ++i)
-                    {
-                        int start = index_list[i];
-                        int end = index_list[i + 1];
-
-                        var name_bytes = span.Slice(start + 32, end - start - 48 - 1).ToArray();
-                        int deli_index = Array.IndexOf(name_bytes, (byte)0x00);
-
-                        if (deli_index == name_bytes.Length - 1) //デリミタ0x00が最後尾ならベース画像
-                            continue;
-
-                        base_name = new UTF8Encoding().GetString(name_bytes.AsSpan(0, deli_index).ToArray());
-                        tag = new UTF8Encoding().GetString(name_bytes.AsSpan(deli_index + 1, name_bytes.Length - deli_index - 1).ToArray());
-
-                        m_metadata_dict[tag] = new PacMetaData
-                        {
-                            Width = BitConverter.ToUInt32(span.Slice(end - 8, 4).ToArray(), 0),
-                            Height = BitConverter.ToUInt32(span.Slice(end - 4, 4).ToArray(), 0),
-                            OffsetX = BitConverter.ToInt32(span.Slice(end - 16, 4).ToArray(), 0),
-                            OffsetY = BitConverter.ToInt32(span.Slice(end - 12, 4).ToArray(), 0),
-                            BPP = 32,
-                            Base = base_name
-                        };
-                    }
-                    m_get_flag = true;
-                }
-                else if (m_dat_type == 0x0C)
-                {
-                    for (int i = 0; i < index_list.Count - 1; ++i)
-                    {
-                        int start = index_list[i];
-                        int end = index_list[i + 1];
-
-                        var name_bytes = span.Slice(start + 32, end - start - 40 - 1).ToArray();
-                        int deli_index = Array.IndexOf(name_bytes, (byte)0x00);
-
-                        if (deli_index == name_bytes.Length - 1) //デリミタ0x00が最後尾ならベース画像
-                            continue;
-
-                        base_name = new UTF8Encoding().GetString(name_bytes.AsSpan(0, deli_index).ToArray());
-                        tag = new UTF8Encoding().GetString(name_bytes.AsSpan(deli_index + 1, name_bytes.Length - deli_index - 1).ToArray());
-
-                        m_metadata_dict[tag] = new PacMetaData
-                        {
-                            OffsetX = BitConverter.ToInt32(span.Slice(end - 8, 4).ToArray(), 0),
-                            OffsetY = BitConverter.ToInt32(span.Slice(end - 4, 4).ToArray(), 0),
-                            BPP = 32,
-                            Base = base_name
-                        };
-                    }
-                    m_get_flag = true;
+                    index_list.Add(i);
+                    i += 50; //1フレームは最低51バイト
                 }
             }
-            //元のアーカイブに戻す処理が必要
-            VFS.FullPath = new string[] { arc.File.Name, "" };
+            index_list.Add(data.Length);
+
+            //データ取得
+            string base_name = "";
+            string tag;
+            if (m_dat_type == 0x0E)
+            {
+                for (int i = 0; i < index_list.Count - 1; ++i)
+                {
+                    int start = index_list[i];
+                    int end = index_list[i + 1];
+
+                    var name_bytes = span.Slice(start + 32, end - start - 48 - 1).ToArray();
+                    int deli_index = Array.IndexOf(name_bytes, (byte)0x00);
+
+                    if (deli_index == name_bytes.Length - 1) //デリミタ0x00が最後尾ならベース画像
+                        continue;
+
+                    base_name = new UTF8Encoding().GetString(name_bytes.AsSpan(0, deli_index).ToArray());
+                    tag = new UTF8Encoding().GetString(name_bytes.AsSpan(deli_index + 1, name_bytes.Length - deli_index - 1).ToArray());
+
+                    m_metadata_dict[tag] = new PacMetaData
+                    {
+                        Width = BitConverter.ToUInt32(span.Slice(end - 8, 4).ToArray(), 0),
+                        Height = BitConverter.ToUInt32(span.Slice(end - 4, 4).ToArray(), 0),
+                        OffsetX = BitConverter.ToInt32(span.Slice(end - 16, 4).ToArray(), 0),
+                        OffsetY = BitConverter.ToInt32(span.Slice(end - 12, 4).ToArray(), 0),
+                        BPP = 32,
+                        Base = base_name
+                    };
+                }
+                m_get_flag = true;
+            }
+            else if (m_dat_type == 0x0C)
+            {
+                for (int i = 0; i < index_list.Count - 1; ++i)
+                {
+                    int start = index_list[i];
+                    int end = index_list[i + 1];
+
+                    var name_bytes = span.Slice(start + 32, end - start - 40 - 1).ToArray();
+                    int deli_index = Array.IndexOf(name_bytes, (byte)0x00);
+
+                    if (deli_index == name_bytes.Length - 1) //デリミタ0x00が最後尾ならベース画像
+                        continue;
+
+                    base_name = new UTF8Encoding().GetString(name_bytes.AsSpan(0, deli_index).ToArray());
+                    tag = new UTF8Encoding().GetString(name_bytes.AsSpan(deli_index + 1, name_bytes.Length - deli_index - 1).ToArray());
+
+                    m_metadata_dict[tag] = new PacMetaData
+                    {
+                        OffsetX = BitConverter.ToInt32(span.Slice(end - 8, 4).ToArray(), 0),
+                        OffsetY = BitConverter.ToInt32(span.Slice(end - 4, 4).ToArray(), 0),
+                        BPP = 32,
+                        Base = base_name
+                    };
+                }
+                m_get_flag = true;
+            }
         }
 
         static private byte[] HuffmanDecode(byte[] packed, int unpacked_size)
