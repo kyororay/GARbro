@@ -131,6 +131,7 @@ namespace GameRes.Formats.CaramelBox
                 entry.Offset = (long)(last_entry_offset + base_offset) * cluster_size;
                 if (entry.Offset >= file.MaxOffset)
                     return null;
+                entry.Type = FormatCatalog.Instance.GetTypeFromName(entry.Name);
                 dir.Add (entry);
                 prev_entry = entry;
                 if (null == long_info && "longinfo.$$$" == name)
@@ -176,8 +177,11 @@ namespace GameRes.Formats.CaramelBox
                     foreach (var entry in dir)
                     {
                         string orig_name;
-                        if (name_map.TryGetValue (entry.Name, out orig_name))
+                        if (name_map.TryGetValue(entry.Name, out orig_name))
+                        {
                             entry.Name = orig_name;
+                            entry.Type = FormatCatalog.Instance.GetTypeFromName(entry.Name);
+                        }
                     }
                 }
             }
