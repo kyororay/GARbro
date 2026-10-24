@@ -405,4 +405,7 @@ Choose encryption scheme or enter a passphrase.</value>
     <value>Choose Tim2 image alpha format.
 It can't be read correctly from the file.</value>
   </data>
+  <data name="Common" xml:space="preserve">
+    <value>Common</value>
+  </data>
 </root>

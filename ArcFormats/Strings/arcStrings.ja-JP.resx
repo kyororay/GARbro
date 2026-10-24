@@ -505,4 +505,7 @@ Choose encryption scheme or enter a passphrase.</comment>
     <value>Tim2画像のAlpha形式を選択してください。
 ファイルから正しく読み取ることができません。</value>
   </data>
+  <data name="Common" xml:space="preserve">
+    <value>共通</value>
+  </data>
 </root>

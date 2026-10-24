@@ -189,6 +189,15 @@ namespace GameRes.Formats.Strings {
         }
         
         /// <summary>
+        ///   Common に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Common {
+            get {
+                return ResourceManager.GetString("Common", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Default file names encoding に類似しているローカライズされた文字列を検索します。
         /// </summary>
         public static string DefaultEncoding {

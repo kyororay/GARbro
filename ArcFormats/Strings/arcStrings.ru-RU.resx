@@ -117,10 +117,6 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="AGSMightBeEncrypted" xml:space="preserve">
-    <value>Содержимое архива может быть зашифровано,
-выберите подходящий способ шифрования.</value>
-  </data>
   <data name="AMIBaseArchive" xml:space="preserve">
     <value>Базовый архив</value>
   </data>
@@ -133,21 +129,9 @@
   <data name="AMINoFiles" xml:space="preserve">
     <value>Не найдено файлов, подходящих для архива AMI.</value>
   </data>
-  <data name="ArcDefault" xml:space="preserve">
-    <value>По умолчанию</value>
-  </data>
   <data name="ArcEncryptedNotice" xml:space="preserve">
     <value>Содержимое архива зашифровано.
 Выберите алгоритм шифрования.</value>
-  </data>
-  <data name="ArcHex32Bit" xml:space="preserve">
-    <value>32-битное шестнадцатеричное число</value>
-  </data>
-  <data name="ArcIgnoreEncryption" xml:space="preserve">
-    <value>Игнорировать шифрование</value>
-  </data>
-  <data name="ArcImageEncrypted" xml:space="preserve">
-    <value>Изображение зашифровано.</value>
   </data>
   <data name="ArcNoEncryption" xml:space="preserve">
     <value>без шифрования</value>
@@ -155,40 +139,8 @@
   <data name="ArcReset" xml:space="preserve">
     <value>Сбросить</value>
   </data>
-  <data name="ArcTitleOrPassword" xml:space="preserve">
-    <value>Выберите наименование или введите пароль</value>
-  </data>
-  <data name="DefaultEncoding" xml:space="preserve">
-    <value>Кодировка имён файлов</value>
-  </data>
-  <data name="DPKKeys" xml:space="preserve">
-    <value>Ключи шифрования</value>
-  </data>
-  <data name="FJSYSNotice" xml:space="preserve">
-    <value>Архив содержит зашифрованные скрипты.
-Выберите способ шифрования или введите текстовый пароль.</value>
-  </data>
-  <data name="GALChoose" xml:space="preserve">
-    <value>Выберите наименование или введите ключ</value>
-  </data>
-  <data name="GYUImageEncrypted" xml:space="preserve">
-    <value>Изображение зашифровано.
-Выберите способ шифрования.</value>
-  </data>
-  <data name="INTChooseExe" xml:space="preserve">
-    <value>Выберите исполняемый файл</value>
-  </data>
   <data name="INTCreationNotice" xml:space="preserve">
     <value>Создание зашифрованных архивов не реализовано.</value>
-  </data>
-  <data name="INTExeButton" xml:space="preserve">
-    <value>Искать EXE</value>
-  </data>
-  <data name="INTExeFiles" xml:space="preserve">
-    <value>Исполняемые файлы</value>
-  </data>
-  <data name="INTKeyNotFound" xml:space="preserve">
-    <value>В файле {0} ключа не обнаружено.</value>
   </data>
   <data name="INTKeyRequirement" xml:space="preserve">
     <value>Цифровой ключ должен быть 32-битным шестнадцатиричным числом</value>
@@ -196,39 +148,14 @@
   <data name="INTLabelNumericKey" xml:space="preserve">
     <value>Цифровой ключ</value>
   </data>
-  <data name="INTMessage1" xml:space="preserve">
-    <value>Нажмите кнопку "Искать EXE", чтобы попытаться найти ключ в исполняемом файле игры.</value>
-  </data>
-  <data name="INTMessage2" xml:space="preserve">
-    <value>Или же выберите один из известных методов шифрования, либо введите ключ вручную.</value>
-  </data>
   <data name="INTNotice" xml:space="preserve">
     <value>Оглавление архива зашифровано.</value>
-  </data>
-  <data name="KCAPDefault" xml:space="preserve">
-    <value>Неизвестно</value>
-  </data>
-  <data name="LabelEncScheme" xml:space="preserve">
-    <value>Способ шифрования</value>
   </data>
   <data name="LabelPassphrase" xml:space="preserve">
     <value>Пароль</value>
   </data>
   <data name="LabelScheme" xml:space="preserve">
     <value>Вариант</value>
-  </data>
-  <data name="MBLNotice" xml:space="preserve">
-    <value>Архив содержит зашифрованные скрипты.
-Выберите способ шифрования или введите текстовый пароль.</value>
-  </data>
-  <data name="MCAEncryptedNotice" xml:space="preserve">
-    <value>Содержимое архива зашифровано.</value>
-  </data>
-  <data name="MCGChoose" xml:space="preserve">
-    <value>Выберите наименование или введите ключ</value>
-  </data>
-  <data name="MCGLabelKey" xml:space="preserve">
-    <value>8-битный ключ шифрования</value>
   </data>
   <data name="MsgAddingFile" xml:space="preserve">
     <value>Добавляется файл</value>
@@ -279,12 +206,6 @@
     <value>Ключи шифрования
 (требуются даже если содержимое не шифруется)</value>
   </data>
-  <data name="ODNAudioSampleRate" xml:space="preserve">
-    <value>Частота дискретизации аудио</value>
-  </data>
-  <data name="OGGFixCrc" xml:space="preserve">
-    <value>Исправлять контрольные суммы в Ogg аудио файлах</value>
-  </data>
   <data name="ONSArchiveType" xml:space="preserve">
     <value>Тип архива</value>
   </data>
@@ -297,22 +218,8 @@
   <data name="PDScrambleContents" xml:space="preserve">
     <value>Шифровать содержимое</value>
   </data>
-  <data name="QLIEDefaultScheme" xml:space="preserve">
-    <value>"Старый" метод шифрования</value>
-  </data>
-  <data name="RCTApplyMask" xml:space="preserve">
-    <value>Подгружать прозрачность из одноимённого RC8 файла</value>
-  </data>
-  <data name="RCTOverlayFrames" xml:space="preserve">
-    <value>Автоматически объединять мозаичные изображения</value>
-  </data>
   <data name="RPALabelKey" xml:space="preserve">
     <value>32-битный ключ</value>
-  </data>
-  <data name="RPMEncryptedNotice" xml:space="preserve">
-    <value>По-видимому, файл является RPM архивом,
-однако определить ключ шифрования не удалось.
-Выберите подходящий способ шифрования.</value>
   </data>
   <data name="SGLabelEncoding" xml:space="preserve">
     <value>Кодировка имён файлов</value>
@@ -330,10 +237,6 @@
   <data name="XP3CompressHeader" xml:space="preserve">
     <value>Сжать оглавление</value>
   </data>
-  <data name="XP3EncryptedNotice" xml:space="preserve">
-    <value>Возможно, содержимое архива зашифровано.
-Выберите алгоритм шифрования.</value>
-  </data>
   <data name="XP3LabelVersion" xml:space="preserve">
     <value>Версия</value>
   </data>
@@ -350,10 +253,110 @@
     <value>Заголовок архива зашифрован.
 Выберите способ дешифровки.</value>
   </data>
+  <data name="LabelEncScheme" xml:space="preserve">
+    <value>Способ шифрования</value>
+  </data>
+  <data name="DPKKeys" xml:space="preserve">
+    <value>Ключи шифрования</value>
+  </data>
+  <data name="ArcDefault" xml:space="preserve">
+    <value>По умолчанию</value>
+  </data>
+  <data name="ArcHex32Bit" xml:space="preserve">
+    <value>32-битное шестнадцатеричное число</value>
+  </data>
+  <data name="KCAPDefault" xml:space="preserve">
+    <value>Неизвестно</value>
+  </data>
+  <data name="MBLNotice" xml:space="preserve">
+    <value>Архив содержит зашифрованные скрипты.
+Выберите способ шифрования или введите текстовый пароль.</value>
+  </data>
+  <data name="ArcTitleOrPassword" xml:space="preserve">
+    <value>Выберите наименование или введите пароль</value>
+  </data>
+  <data name="RPMEncryptedNotice" xml:space="preserve">
+    <value>По-видимому, файл является RPM архивом,
+однако определить ключ шифрования не удалось.
+Выберите подходящий способ шифрования.</value>
+  </data>
+  <data name="QLIEDefaultScheme" xml:space="preserve">
+    <value>"Старый" метод шифрования</value>
+  </data>
+  <data name="INTChooseExe" xml:space="preserve">
+    <value>Выберите исполняемый файл</value>
+  </data>
+  <data name="INTExeButton" xml:space="preserve">
+    <value>Искать EXE</value>
+  </data>
+  <data name="INTExeFiles" xml:space="preserve">
+    <value>Исполняемые файлы</value>
+  </data>
+  <data name="INTMessage1" xml:space="preserve">
+    <value>Нажмите кнопку "Искать EXE", чтобы попытаться найти ключ в исполняемом файле игры.</value>
+  </data>
+  <data name="INTMessage2" xml:space="preserve">
+    <value>Или же выберите один из известных методов шифрования, либо введите ключ вручную.</value>
+  </data>
+  <data name="INTKeyNotFound" xml:space="preserve">
+    <value>В файле {0} ключа не обнаружено.</value>
+  </data>
+  <data name="ArcIgnoreEncryption" xml:space="preserve">
+    <value>Игнорировать шифрование</value>
+  </data>
+  <data name="ArcImageEncrypted" xml:space="preserve">
+    <value>Изображение зашифровано.</value>
+  </data>
+  <data name="MCGChoose" xml:space="preserve">
+    <value>Выберите наименование или введите ключ</value>
+  </data>
+  <data name="MCGLabelKey" xml:space="preserve">
+    <value>8-битный ключ шифрования</value>
+  </data>
+  <data name="MCAEncryptedNotice" xml:space="preserve">
+    <value>Содержимое архива зашифровано.</value>
+  </data>
   <data name="YPFTryGuess" xml:space="preserve">
     <value>Попытаться подобрать</value>
   </data>
+  <data name="AGSMightBeEncrypted" xml:space="preserve">
+    <value>Содержимое архива может быть зашифровано,
+выберите подходящий способ шифрования.</value>
+  </data>
+  <data name="XP3EncryptedNotice" xml:space="preserve">
+    <value>Возможно, содержимое архива зашифровано.
+Выберите алгоритм шифрования.</value>
+  </data>
+  <data name="GALChoose" xml:space="preserve">
+    <value>Выберите наименование или введите ключ</value>
+  </data>
+  <data name="GYUImageEncrypted" xml:space="preserve">
+    <value>Изображение зашифровано.
+Выберите способ шифрования.</value>
+  </data>
+  <data name="FJSYSNotice" xml:space="preserve">
+    <value>Архив содержит зашифрованные скрипты.
+Выберите способ шифрования или введите текстовый пароль.</value>
+  </data>
+  <data name="RCTApplyMask" xml:space="preserve">
+    <value>Подгружать прозрачность из одноимённого RC8 файла</value>
+  </data>
+  <data name="RCTOverlayFrames" xml:space="preserve">
+    <value>Автоматически объединять мозаичные изображения</value>
+  </data>
   <data name="ZIPEncryptedNotice" xml:space="preserve">
     <value>Содержимое архива зашифровано.</value>
+  </data>
+  <data name="OGGFixCrc" xml:space="preserve">
+    <value>Исправлять контрольные суммы в Ogg аудио файлах</value>
+  </data>
+  <data name="DefaultEncoding" xml:space="preserve">
+    <value>Кодировка имён файлов</value>
+  </data>
+  <data name="ODNAudioSampleRate" xml:space="preserve">
+    <value>Частота дискретизации аудио</value>
+  </data>
+  <data name="Common" xml:space="preserve">
+    <value>общий</value>
   </data>
 </root>
