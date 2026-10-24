@@ -801,14 +801,12 @@ namespace GameRes.Formats.KiriKiri
                 return alg;
             var options = Query<Xp3Options>(arcStrings.XP3EncryptedNotice);
 
-            m_title = new WidgetXP3().Scheme.SelectedValue as string;
-            Console.WriteLine(new WidgetXP3().Scheme.SelectedValue.GetType());
-
             return options.Scheme;
         }
 
         public static ICrypt GetScheme(string scheme)
         {
+            m_title = scheme; //プルダウンメニューで選択したゲームタイトル
             ICrypt algorithm;
             if (!CommonKeys.TryGetValue(scheme, out algorithm) && !KnownSchemes.TryGetValue(scheme, out algorithm))
                 algorithm = NoCryptAlgorithm;
