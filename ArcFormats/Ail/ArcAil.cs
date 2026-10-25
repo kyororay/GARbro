@@ -74,7 +74,6 @@ namespace GameRes.Formats.Ail
         internal List<Entry> ReadIndex (ArcView file, uint index_offset, int count)
         {
             var base_name = Path.GetFileNameWithoutExtension (file.Name);
-            Console.WriteLine ("{0}: {1} entries", base_name, count);
             long offset = index_offset + count*4;
             if (offset >= file.MaxOffset)
                 return null;
