@@ -52,6 +52,7 @@ namespace GameRes.Formats.ExHibit
         public int  DataSize;
         public int  AlphaSize;
         public int  PaletteSize;
+        public string BaseFileName; //ベース画像のファイル名(フルパス)
     }
 
     [Serializable]
@@ -100,62 +101,19 @@ namespace GameRes.Formats.ExHibit
                 PaletteSize = stream.ReadInt32(),
             };
 
-            if (info.Flags == 0x80) //差分画像
+            if (info.Flags == 0x80 && stream.Length > 1044) //差分画像
             {
                 stream.Position = stream.Length - 1008;
-                var meta_list = stream.ReadCString(14).Split(',');
-                string base_name = Path.GetDirectoryName(stream.Name) + "\\" + meta_list[0].PadLeft(4, '0') + ".gyu"; //ベース画像のファイル名
-                info.OffsetX = int.Parse(meta_list[1]);
-                info.OffsetY = int.Parse(meta_list[2]);
-                (info.BaseWidth, info.BaseHeight) = ReadBaseMetaData(base_name, info);
-            }
-            else
-            {
-                info.OffsetX = 0;
-                info.OffsetY = 0;
-                info.BaseWidth = info.Width;
-                info.BaseHeight = info.Height;
+                var meta_ary = stream.ReadCString(14).Split(',');
+                if (meta_ary.Length == 3)
+                {
+                    info.BaseFileName = Path.GetDirectoryName(stream.Name) + "\\" + meta_ary[0].PadLeft(4, '0') + ".gyu";
+                    info.OffsetX = int.Parse(meta_ary[1]);
+                    info.OffsetY = int.Parse(meta_ary[2]);
+                }
             }
 
             return info;
-        }
-
-        //ベース画像のWidth, Heightを取得
-        private (uint, uint) ReadBaseMetaData(string name, GyuMetaData info)
-        {
-            string file_name = name;
-            uint base_width = (uint)info.OffsetX + info.Width;
-            uint base_height = (uint)info.OffsetY + info.Height;
-
-            if (!VFS.IsVirtual) //gyu直開き
-            {
-                while (true)
-                {
-                    if (!VFS.FileExists(file_name))
-                        break;
-                    using (var input = VFS.OpenBinaryStream(file_name))
-                    {
-                        input.Position = 0x4;
-                        if (input.ReadUInt16() == 0x80)
-                        {
-                            input.Position = input.Length - 1008;
-                            file_name = Path.GetDirectoryName(file_name) + "\\" + input.ReadCString(4).Replace(",", "").PadLeft(4, '0') + ".gyu";
-                        }
-                        else
-                        {
-                            input.Position = 0x10;
-                            base_width = input.ReadUInt32();
-                            base_height = input.ReadUInt32();
-                            break;
-                        }
-                    }
-                }
-            }
-            else //アーカイブから参照(このユースケースは無い？)
-            {
-                Console.WriteLine("未実装です～");
-            }
-            return (base_width, base_height);
         }
 
         IDictionary CurrentMap = null;
@@ -186,31 +144,52 @@ namespace GameRes.Formats.ExHibit
             }
             var reader = new GyuReader (stream.AsStream, meta);
             reader.Unpack();
-            var source = ImageData.CreateFlipped(meta, reader.Format, reader.Palette, reader.Data, reader.Stride);
+            var image = ImageData.CreateFlipped(meta, reader.Format, reader.Palette, reader.Data, reader.Stride);
 
             if (meta.Flags == 0x80) //差分画像
+                image = CompositeImage(image, meta);
+
+            return image;
+        }
+
+        private ImageData CompositeImage(ImageData image, GyuMetaData meta)
+        {
+            int byte_depth = 4;
+            int stride;
+            int offset;
+            byte[] pixels;
+
+            if (!string.IsNullOrEmpty(meta.BaseFileName) && VFS.FileExists(meta.BaseFileName))
             {
-                int byte_depth = 4;
-                int stride = meta.iBaseWidth * byte_depth;
-                int offset = meta.OffsetY * stride + meta.OffsetX * byte_depth;
-                var pixels = new byte[stride * meta.BaseHeight];
+                using (var input = VFS.OpenBinaryStream(meta.BaseFileName))
+                {
+                    var base_meta = (GyuMetaData)ReadMetaData(input);
+                    base_meta.FileName = meta.BaseFileName;
+                    var base_image = Read(input, base_meta);
+                    stride = (int)base_image.Width * byte_depth;
+                    offset = meta.OffsetY * stride + meta.OffsetX * byte_depth;
+                    pixels = new byte[stride * base_image.Height];
 
-                var formated_source = new FormatConvertedBitmap(source.Bitmap, PixelFormats.Bgra32, null, 100); //24bit ⇒ 32bit(アルファ付き)
-                formated_source.CopyPixels(Int32Rect.Empty, pixels, stride, offset);
+                    var formated_base_source = new FormatConvertedBitmap(base_image.Bitmap, PixelFormats.Bgra32, null, 100); //24bit ⇒ α有り32bit
+                    formated_base_source.CopyPixels(Int32Rect.Empty, pixels, stride, 0);
 
-                source = new ImageData(BitmapImage.Create(
-                    meta.iBaseWidth,
-                    meta.iBaseHeight,
-                    ImageData.DefaultDpiX,
-                    ImageData.DefaultDpiY,
-                    PixelFormats.Bgra32,
-                    null,
-                    pixels,
-                    stride
-                    ));
+                    var formated_source = new FormatConvertedBitmap(image.Bitmap, PixelFormats.Bgra32, null, 100); //24bit ⇒ α有り32bit
+                    formated_source.CopyPixels(Int32Rect.Empty, pixels, stride, offset);
+
+                    image = new ImageData(BitmapImage.Create(
+                        (int)base_image.Width,
+                        (int)base_image.Height,
+                        ImageData.DefaultDpiX,
+                        ImageData.DefaultDpiY,
+                        PixelFormats.Bgra32,
+                        null,
+                        pixels,
+                        stride
+                        ));
+                }
             }
 
-            return source;
+            return image;
         }
 
         public override void Write (Stream file, ImageData image)
@@ -221,12 +200,6 @@ namespace GameRes.Formats.ExHibit
         private IDictionary QueryScheme ()
         {
             var options = Query<GyuOptions> (arcStrings.GYUImageEncrypted);
-            /*var key_list = new List<uint>();
-            foreach (var x in options.Scheme.Values)
-                key_list.Add((uint)x);
-            key_list = key_list.Distinct().ToList();
-            foreach (var x in key_list)
-                Console.WriteLine ("{0:X4}", x);*/
             return options.Scheme;
         }
 
