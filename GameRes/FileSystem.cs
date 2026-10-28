@@ -648,16 +648,22 @@ namespace GameRes
             }
         }
 
-        private bool _disposed = false;
         public void Dispose ()
         {
-            if (!_disposed)
+            if (LastVisitedArc != null)
             {
-                Flush();
-                foreach (var fs in m_fs_stack.Reverse())
-                    fs.Dispose();
-                _disposed = true;
+                LastVisitedArc.Dispose();
+                LastVisitedArc = null;
+                LastVisitedPath = null;
             }
+            if (CurrentArchive != null)
+            {
+                CurrentArchive.Dispose();
+                CurrentArchive = null;
+            }
+            foreach (var fs in m_fs_stack.Reverse())
+                fs.Dispose();
+
             GC.SuppressFinalize (this);
         }
     }
@@ -807,6 +813,11 @@ namespace GameRes
         public static void Flush ()
         {
             m_vfs.Flush();
+        }
+
+        public static void Dispose()
+        {
+            m_vfs.Dispose();
         }
 
         public static void Pop ()

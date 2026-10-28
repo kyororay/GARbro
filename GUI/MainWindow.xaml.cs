@@ -921,22 +921,8 @@ namespace GARbro.GUI
             var home_path = HomeUrl.Get<string>();
             if (GetCurrentPosition().Path.First() != home_path)
             {
-                ArcDispose();
+                VFS.Dispose();
                 OpenFile(home_path);
-            }
-        }
-
-        //アーカイブへのファイルアクセスを解除（アンマネージドメモリの開放）
-        public void ArcDispose()
-        {
-            var arc = VFS.CurrentArchive;
-            if (arc != null) //アーカイブ内
-                arc.Dispose();
-            else //アーカイブ外
-            {
-                var last_arc = VFS.LastVisitedArc;
-                if (last_arc != null)
-                    (last_arc as ArchiveFileSystem).Source.Dispose();
             }
         }
 
