@@ -334,13 +334,13 @@ Overwrite?</value>
     <value>E_xit</value>
   </data>
   <data name="MenuFile" xml:space="preserve">
-    <value>_File</value>
+    <value>File</value>
   </data>
   <data name="MenuSetting" xml:space="preserve">
-    <value>_Setting</value>
+    <value>Setting</value>
   </data>
   <data name="MenuHelp" xml:space="preserve">
-    <value>_Help</value>
+    <value>Help</value>
   </data>
   <data name="MenuTroubleShooting" xml:space="preserve">
     <value>Troubleshooting...</value>
@@ -379,7 +379,7 @@ Overwrite?</value>
     <value>Show/hide _toolbar</value>
   </data>
   <data name="MenuView" xml:space="preserve">
-    <value>_View</value>
+    <value>View</value>
   </data>
   <data name="CtxMenuConvert" xml:space="preserve">
     <value>Convert multimedia...</value>
@@ -542,7 +542,7 @@ Overwrite?</value>
     <value>Apply</value>
   </data>
   <data name="MenuPreferences" xml:space="preserve">
-    <value>_Preferences</value>
+    <value>Preferences</value>
   </data>
   <data name="TextFormats" xml:space="preserve">
     <value>Formats</value>
@@ -579,5 +579,20 @@ Overwrite?</value>
   </data>
   <data name="CtxMenuSetEncoding" xml:space="preserve">
     <value>Character Encoding</value>
+  </data>
+  <data name="MenuTool" xml:space="preserve">
+    <value>Tool</value>
+  </data>
+  <data name="MenuShowArcFormat" xml:space="preserve">
+    <value>Show archive format</value>
+  </data>
+  <data name="Notification" xml:space="preserve">
+    <value>Notification</value>
+  </data>
+  <data name="MsgShowArcFormat" xml:space="preserve">
+    <value>Archive is not open</value>
+  </data>
+  <data name="ArchiveFormat" xml:space="preserve">
+    <value>Archive format</value>
   </data>
 </root>

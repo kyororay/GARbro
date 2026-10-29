@@ -61,6 +61,15 @@ namespace GARbro.GUI.Strings {
         }
         
         /// <summary>
+        ///   Archive format に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string ArchiveFormat {
+            get {
+                return ResourceManager.GetString("ArchiveFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   _Abort に類似しているローカライズされた文字列を検索します。
         /// </summary>
         public static string ButtonAbort {
@@ -547,7 +556,7 @@ namespace GARbro.GUI.Strings {
         }
         
         /// <summary>
-        ///   _File に類似しているローカライズされた文字列を検索します。
+        ///   File に類似しているローカライズされた文字列を検索します。
         /// </summary>
         public static string MenuFile {
             get {
@@ -565,7 +574,7 @@ namespace GARbro.GUI.Strings {
         }
         
         /// <summary>
-        ///   _Help に類似しているローカライズされた文字列を検索します。
+        ///   Help に類似しているローカライズされた文字列を検索します。
         /// </summary>
         public static string MenuHelp {
             get {
@@ -583,7 +592,7 @@ namespace GARbro.GUI.Strings {
         }
         
         /// <summary>
-        ///   _Preferences に類似しているローカライズされた文字列を検索します。
+        ///   Preferences に類似しているローカライズされた文字列を検索します。
         /// </summary>
         public static string MenuPreferences {
             get {
@@ -610,11 +619,20 @@ namespace GARbro.GUI.Strings {
         }
         
         /// <summary>
-        ///   _Setting に類似しているローカライズされた文字列を検索します。
+        ///   Setting に類似しているローカライズされた文字列を検索します。
         /// </summary>
         public static string MenuSetting {
             get {
                 return ResourceManager.GetString("MenuSetting", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Show archive format に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string MenuShowArcFormat {
+            get {
+                return ResourceManager.GetString("MenuShowArcFormat", resourceCulture);
             }
         }
         
@@ -646,6 +664,15 @@ namespace GARbro.GUI.Strings {
         }
         
         /// <summary>
+        ///   Tool に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string MenuTool {
+            get {
+                return ResourceManager.GetString("MenuTool", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Troubleshooting... に類似しているローカライズされた文字列を検索します。
         /// </summary>
         public static string MenuTroubleShooting {
@@ -655,7 +682,7 @@ namespace GARbro.GUI.Strings {
         }
         
         /// <summary>
-        ///   _View に類似しているローカライズされた文字列を検索します。
+        ///   View に類似しているローカライズされた文字列を検索します。
         /// </summary>
         public static string MenuView {
             get {
@@ -946,6 +973,15 @@ namespace GARbro.GUI.Strings {
         }
         
         /// <summary>
+        ///   Archive is not open に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string MsgShowArcFormat {
+            get {
+                return ResourceManager.GetString("MsgShowArcFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Type : text / Character Encoding : {0} に類似しているローカライズされた文字列を検索します。
         /// </summary>
         public static string MsgTextStatus {
@@ -1014,6 +1050,15 @@ namespace GARbro.GUI.Strings {
         public static string MsgVersion {
             get {
                 return ResourceManager.GetString("MsgVersion", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Notification に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Notification {
+            get {
+                return ResourceManager.GetString("Notification", resourceCulture);
             }
         }
         

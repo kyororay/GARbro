@@ -123,6 +123,9 @@
   <data name="ButtonExtract" xml:space="preserve">
     <value>Извлечь</value>
   </data>
+  <data name="ButtonOK" xml:space="preserve">
+    <value>ХОРОШО</value>
+  </data>
   <data name="CtxMenuClose" xml:space="preserve">
     <value>_Закрыть</value>
   </data>
@@ -329,6 +332,9 @@
   </data>
   <data name="MenuFile" xml:space="preserve">
     <value>_Файл</value>
+  </data>
+  <data name="MenuSetting" xml:space="preserve">
+    <value>параметр</value>
   </data>
   <data name="MenuHelp" xml:space="preserve">
     <value>_Справка</value>
@@ -569,6 +575,12 @@
   <data name="CtxMenuSetEncoding" xml:space="preserve">
     <value>Кодировка символов</value>
   </data>
+  <data name="MenuTool" xml:space="preserve">
+    <value>инструмент</value>
+  </data>
+  <data name="MenuShowArcFormat" xml:space="preserve">
+    <value>Показать формат архива</value>
+  </data>
   <data name="Type_archive" xml:space="preserve">
     <value>архив</value>
   </data>
@@ -592,5 +604,14 @@
   </data>
   <data name="MsgDeletedItems3" xml:space="preserve">
     <value>Удалено {0} файлов</value>
+  </data>
+  <data name="Notification" xml:space="preserve">
+    <value>Уведомление</value>
+  </data>
+  <data name="MsgShowArcFormat" xml:space="preserve">
+    <value>Архив не открыт</value>
+  </data>
+  <data name="ArchiveFormat" xml:space="preserve">
+    <value>Архивный формат</value>
   </data>
 </root>

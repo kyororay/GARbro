@@ -671,7 +671,39 @@ namespace GARbro.GUI
         {
             string volume_value = e.Parameter as string;
             VolumeValue = volume_value;
+        }
 
+        /// <summary>
+        /// Handle "ShowArchiveFormat" commands.
+        /// </summary>
+
+        private void ShowArchiveFormatExec(object sender, ExecutedRoutedEventArgs e)
+        {
+            var arc = VFS.CurrentArchive;
+            if (arc != null)
+            {
+                MessageBox.Show(
+                    this,
+                    $"【Tag】\r\n" +
+                    $"{arc.Tag}\r\n\r\n" +
+                    $"【Description】\r\n" +
+                    $"{arc.Description}\r\n\r\n" +
+                    $"【Class name】\r\n" +
+                    $"{arc.Interface.GetType().ToString()}",
+                    guiStrings.ArchiveFormat,
+                    MessageBoxButton.OK
+                    );
+            }
+            else
+            {
+                MessageBox.Show(
+                    this, 
+                    guiStrings.MsgShowArcFormat, 
+                    guiStrings.Notification, 
+                    MessageBoxButton.OK, 
+                    MessageBoxImage.Information
+                    );
+            }
         }
 
         /// <summary>
@@ -1858,6 +1890,7 @@ namespace GARbro.GUI
         public static readonly RoutedCommand SortBy = new RoutedCommand();
         public static readonly RoutedCommand SetEncoding = new RoutedCommand();
         public static readonly RoutedCommand SetVolume = new RoutedCommand();
+        public static readonly RoutedCommand ShowArchiveFormat = new RoutedCommand();
         public static readonly RoutedCommand Exit = new RoutedCommand();
         public static readonly RoutedCommand About = new RoutedCommand();
         public static readonly RoutedCommand CheckUpdates = new RoutedCommand();

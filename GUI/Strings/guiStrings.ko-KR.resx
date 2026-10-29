@@ -336,6 +336,9 @@
   <data name="MenuFile" xml:space="preserve">
     <value>_파일</value>
   </data>
+  <data name="MenuSetting" xml:space="preserve">
+    <value>설정</value>
+  </data>
   <data name="MenuHelp" xml:space="preserve">
     <value>_도움말</value>
   </data>
@@ -575,6 +578,12 @@
   <data name="CtxMenuSetEncoding" xml:space="preserve">
     <value>문자 인코딩</value>
   </data>
+  <data name="MenuTool" xml:space="preserve">
+    <value>도구</value>
+  </data>
+  <data name="MenuShowArcFormat" xml:space="preserve">
+    <value>아카이브 형식 표시</value>
+  </data>
   <data name="Type_archive" xml:space="preserve">
     <value>아카이브</value>
   </data>
@@ -586,5 +595,14 @@
   </data>
   <data name="Type_script" xml:space="preserve">
     <value>스크립트</value>
+  </data>
+  <data name="Notification" xml:space="preserve">
+    <value>공고</value>
+  </data>
+  <data name="MsgShowArcFormat" xml:space="preserve">
+    <value>아카이브를 열지 않았습니다</value>
+  </data>
+  <data name="ArchiveFormat" xml:space="preserve">
+    <value>아카이브 형식</value>
   </data>
 </root>

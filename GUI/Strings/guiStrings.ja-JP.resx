@@ -729,4 +729,19 @@ Overwrite?</comment>
   <data name="CtxMenuSetEncoding" xml:space="preserve">
     <value>文字エンコード</value>
   </data>
+  <data name="MenuTool" xml:space="preserve">
+    <value>ツール</value>
+  </data>
+  <data name="MenuShowArcFormat" xml:space="preserve">
+    <value>アーカイブフォーマットを表示</value>
+  </data>
+  <data name="Notification" xml:space="preserve">
+    <value>通知</value>
+  </data>
+  <data name="MsgShowArcFormat" xml:space="preserve">
+    <value>アーカイブを開いていません</value>
+  </data>
+  <data name="ArchiveFormat" xml:space="preserve">
+    <value>アーカイブフォーマット</value>
+  </data>
 </root>

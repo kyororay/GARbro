@@ -336,6 +336,9 @@
   <data name="MenuFile" xml:space="preserve">
     <value>_文件</value>
   </data>
+  <data name="MenuSetting" xml:space="preserve">
+    <value>环境</value>
+  </data>
   <data name="MenuHelp" xml:space="preserve">
     <value>_帮助</value>
   </data>
@@ -572,6 +575,12 @@
   <data name="CtxMenuSetEncoding" xml:space="preserve">
     <value>字符编码</value>
   </data>
+  <data name="MenuTool" xml:space="preserve">
+    <value>工具</value>
+  </data>
+  <data name="MenuShowArcFormat" xml:space="preserve">
+    <value>显示存档格式</value>
+  </data>
   <data name="Type_archive" xml:space="preserve">
     <value>档案</value>
   </data>
@@ -583,5 +592,14 @@
   </data>
   <data name="Type_script" xml:space="preserve">
     <value>脚本</value>
+  </data>
+  <data name="Notification" xml:space="preserve">
+    <value>通知</value>
+  </data>
+  <data name="MsgShowArcFormat" xml:space="preserve">
+    <value>存档未打开</value>
+  </data>
+  <data name="ArchiveFormat" xml:space="preserve">
+    <value>存档格式</value>
   </data>
 </root>
