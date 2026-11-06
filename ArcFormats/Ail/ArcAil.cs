@@ -92,7 +92,7 @@ namespace GameRes.Formats.Ail
                     };
                     if (!entry.CheckPlacement (file.MaxOffset))
                         return null;
-                    if (base_name.ToLower().Contains("gall"))
+                    if (base_name.ToLower().Contains("gall") || base_name.ToLower().Contains("pall")) //gall: ƒCƒxƒ“ƒgCG, pall: —§‚¿ŠG
                         entry.Type = "image";
                     dir.Add (entry);
                     offset += size;
